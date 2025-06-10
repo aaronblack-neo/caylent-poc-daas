@@ -24,7 +24,7 @@ resource "aws_s3_object" "raw_glue_job_script" {
 
 
 resource "aws_glue_job" "raw_job" {
-  name     = "marcos-landing-to-raw"
+  name     = "caylent-poc-etl-landing-to-raw"
   role_arn = aws_iam_role.glue_etl_role.arn
 
   command {
