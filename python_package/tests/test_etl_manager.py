@@ -1,5 +1,3 @@
-
-
 def test_loading_data(glue_context):
     from etl.etl_manager import EtlManager
 

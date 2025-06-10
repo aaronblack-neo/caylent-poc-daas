@@ -6,6 +6,7 @@ from pyspark.sql.functions import regexp_extract, input_file_name
 
 TIMESTAMP_COLUMN_NAME = "timestamp"
 
+
 class EtlManager:
     def __init__(self, glue_context, landing_bucket_name, raw_bucket_name):
         self.glue_client = boto3.client("glue", region_name="us-east-1")
@@ -24,17 +25,16 @@ class EtlManager:
 
         # Read CSV files into a Spark DataFrame,
         # Use | separator
-        df = self.spark.read.format("csv") \
-            .option("header", "true") \
-            .option("inferSchema", "true") \
-            .option("delimiter", "|") \
+        df = (
+            self.spark.read.format("csv")
+            .option("header", "true")
+            .option("inferSchema", "true")
+            .option("delimiter", "|")
             .load(s3_input_path)
+        )
 
         # Extract timestamp from file names
         timestamp_pattern = rf"{table.upper()}_(\d{{8}})"
         df = df.withColumn(TIMESTAMP_COLUMN_NAME, regexp_extract(input_file_name(), timestamp_pattern, 1))
 
-        df.show()
-
-        #df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").create()
         df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").overwritePartitions().create()
