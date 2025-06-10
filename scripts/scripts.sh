@@ -18,4 +18,4 @@ aws s3 cp s3://neogenomics-caylent-shared-data-daas s3://caylent-poc-dl-landing/
 aws s3 cp s3://neogenomics-caylent-shared-data-daas s3://caylent-poc-dl-landing/image_data --recursive --exclude "*" --include "IMAGE_DATA_*"
 
 #ORDERS_FACT_DATA
-aws s3 cp s3://neogenomics-caylent-shared-data-daas s3://caylent-poc-dl-landing/orders_facts_data --recursive --exclude "*" --include "ORDERS_FACT_DATA_*"
+aws s3 cp s3://neogenomics-caylent-shared-data-daas s3://caylent-poc-dl-landing/orders_fact_data --recursive --exclude "*" --include "ORDERS_FACT_DATA_*"
