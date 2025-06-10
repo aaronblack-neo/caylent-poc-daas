@@ -16,8 +16,8 @@ EOT
 resource "aws_s3_object" "raw_glue_job_script" {
   bucket = aws_s3_bucket.glue_scripts_bucket.id
   key    = "glue_jobs/${local.raw_job_name}"
-  source = "../glue_jobs/${local.raw_job_name}"
-  etag   = filemd5("../glue_jobs/${local.raw_job_name}")
+  source = "../python_package/glue_jobs/${local.raw_job_name}"
+  etag   = filemd5("../python_package/glue_jobs/${local.raw_job_name}")
 }
 
 
@@ -44,6 +44,7 @@ resource "aws_glue_job" "raw_job" {
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--landing_bucket_name"              = aws_s3_bucket.landing_bucket.id
     "--raw_bucket_name"                  = aws_s3_bucket.raw_bucket.id
+    "--table_name"                       = "-"
     "--conf"                             = trim(local.spark_conf, "\n")
   }
 
