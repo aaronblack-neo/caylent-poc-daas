@@ -8,7 +8,7 @@ locals {
  --conf spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog
  --conf spark.sql.catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO
  --conf spark.sql.defaultCatalog=glue_catalog
- --conf spark.sql.catalog.glue_catalog.default-namespace=stage
+ --conf spark.sql.catalog.glue_catalog.default-namespace=raw
  --conf spark.sql.parquet.mergeSchema=true
 EOT
 }
@@ -44,7 +44,7 @@ resource "aws_glue_job" "raw_job" {
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--landing_bucket_name"              = aws_s3_bucket.landing_bucket.id
     "--raw_bucket_name"                  = aws_s3_bucket.raw_bucket.id
-    "--table_name"                       = "-"
+    "--table_name"                       = "accession_data"
     "--conf"                             = trim(local.spark_conf, "\n")
   }
 
