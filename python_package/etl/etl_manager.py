@@ -34,20 +34,7 @@ class EtlManager:
         timestamp_pattern = rf"{table.upper()}_(\d{{8}})"
         df = df.withColumn(TIMESTAMP_COLUMN_NAME, regexp_extract(input_file_name(), timestamp_pattern, 1))
 
-        df.show(10, False)
+        df.show()
 
-        # Write to Iceberg table
-        # df.write.format("iceberg") \
-        #     .mode("overwrite") \
-        #     .option("path", iceberg_table_path) \
-        #     .save()
-        #
-        # df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").partitionedBy(
-        #     "year", "month", "day"
-        # ).create()
-
-        # df.write.format("iceberg") \
-        #     .mode("overwrite") \
-        #     .save(f"{target_database}.{table}")
-
-        df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").create()
+        #df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").create()
+        df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").overwritePartitions().create()
