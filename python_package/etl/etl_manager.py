@@ -38,7 +38,7 @@ class EtlManager:
         df = df.withColumn(TIMESTAMP_COLUMN_NAME, regexp_extract(input_file_name(), timestamp_pattern, 1))
 
         if self.table_exists_in_glue_catalog(target_database, table):
-            df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").overwritePartitions().create()
+            df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").overwritePartitions()
         else:
             df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").create()
 
@@ -46,10 +46,10 @@ class EtlManager:
 
 
 
-def table_exists_in_glue_catalog(self, database_name, table_name):
-    try:
-        result = self.spark.sql(f"SHOW TABLES IN {database_name}").filter(f"tableName = '{table_name}'").count()
-        return result > 0
-    except Exception as e:
-        self.logger.error(f"Error checking table existence: {e}")
-        return False
+    def table_exists_in_glue_catalog(self, database_name, table_name):
+        try:
+            result = self.spark.sql(f"SHOW TABLES IN {database_name}").filter(f"tableName = '{table_name}'").count()
+            return result > 0
+        except Exception as e:
+            self.logger.error(f"Error checking table existence: {e}")
+            return False
