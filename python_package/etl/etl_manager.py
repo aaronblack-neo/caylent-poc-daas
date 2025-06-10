@@ -19,7 +19,7 @@ class EtlManager:
         # S3 bucket and prefix
 
         s3_input_path = f"s3://{self.landing_bucket_name}/{table}"
-        iceberg_table_path = f"s3://{self.raw_bucket_name}/tables/{table}"
+        iceberg_table_path = f"s3://{self.raw_bucket_name}/tables/{table}/"
         target_database = "raw"
 
         # Read CSV files into a Spark DataFrame,
@@ -41,7 +41,13 @@ class EtlManager:
         #     .mode("overwrite") \
         #     .option("path", iceberg_table_path) \
         #     .save()
-        df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").partitionedBy(
-            "year", "month", "day"
-        ).create()
+        #
+        # df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").partitionedBy(
+        #     "year", "month", "day"
+        # ).create()
 
+        # df.write.format("iceberg") \
+        #     .mode("overwrite") \
+        #     .save(f"{target_database}.{table}")
+
+        df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").create()

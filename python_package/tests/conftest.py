@@ -2,7 +2,7 @@ import pytest
 from pyspark.sql import SparkSession
 from awsglue.context import GlueContext
 
-from python_package.config import raw_bucket_name
+from etl.config import raw_bucket_name
 
 
 @pytest.fixture(scope="session")
