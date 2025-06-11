@@ -38,6 +38,5 @@ etl_manager = EtlManager(
     raw_bucket_name=raw_bucket_name,
 )
 latest_data_df = etl_manager.process_landing_data(table=table_name)
-latest_data_df.show()
 
 job.commit()
