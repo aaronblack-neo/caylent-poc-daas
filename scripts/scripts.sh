@@ -19,3 +19,31 @@ aws s3 cp s3://neogenomics-caylent-shared-data-daas s3://caylent-poc-dl-landing/
 
 #ORDERS_FACT_DATA
 aws s3 cp s3://neogenomics-caylent-shared-data-daas s3://caylent-poc-dl-landing/orders_fact_data --recursive --exclude "*" --include "ORDERS_FACT_DATA_*"
+
+
+
+
+# Run Glue Jobs
+aws glue start-job-run \
+  --job-name caylent-poc-etl-landing-to-raw \
+  --arguments '{"--landing_bucket_name":"caylent-poc-dl-landing","--raw_bucket_name":"caylent-poc-dl-raw","--table_name":"accession_data"}'
+
+aws glue start-job-run \
+  --job-name caylent-poc-etl-landing-to-raw \
+  --arguments '{"--landing_bucket_name":"caylent-poc-dl-landing","--raw_bucket_name":"caylent-poc-dl-raw","--table_name":"case_data"}'
+
+aws glue start-job-run \
+  --job-name caylent-poc-etl-landing-to-raw \
+  --arguments '{"--landing_bucket_name":"caylent-poc-dl-landing","--raw_bucket_name":"caylent-poc-dl-raw","--table_name":"client_data"}'
+
+aws glue start-job-run \
+  --job-name caylent-poc-etl-landing-to-raw \
+  --arguments '{"--landing_bucket_name":"caylent-poc-dl-landing","--raw_bucket_name":"caylent-poc-dl-raw","--table_name":"doctor_data"}'
+
+aws glue start-job-run \
+  --job-name caylent-poc-etl-landing-to-raw \
+  --arguments '{"--landing_bucket_name":"caylent-poc-dl-landing","--raw_bucket_name":"caylent-poc-dl-raw","--table_name":"image_data"}'
+
+aws glue start-job-run \
+  --job-name caylent-poc-etl-landing-to-raw \
+  --arguments '{"--landing_bucket_name":"caylent-poc-dl-landing","--raw_bucket_name":"caylent-poc-dl-raw","--table_name":"orders_fact_data"}'

@@ -35,6 +35,16 @@ Before using this configuration, ensure you have:
    terraform apply
    ```
 
+## Building Python Package
+To build the Python package, follow these steps (locally or in a CI/CD pipeline):
+1. Ensure you have Python and pip installed.
+2. Navigate to the directory containing the `setup.py` file.
+3. Run the following command to build and deploy the package:
+   ```
+   python setup.py bdist_wheel --dist-dir /tmp/python_artifact;  aws s3 cp /tmp/python_artifact/python_libs-0.1.0-py3-none-any.whl  s3://caylent-poc-glue-scripts/artifacts/; rm -rf python_libs.egg-info; rm -rf build; 
+   ```
+
+
 ## Important Notes
 
 - Ensure you have appropriate permissions to access the S3 bucket and DynamoDB table
