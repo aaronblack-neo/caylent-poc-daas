@@ -1,7 +1,6 @@
 
 
-
-# Grouping files by type in folders
+### Scripts to copy data from shared S3 bucket to landing zone, grouping files by type in folders
 #ACCESSION_DATA
 aws s3 cp s3://neogenomics-caylent-shared-data-daas s3://caylent-poc-dl-landing/accession_data --recursive --exclude "*" --include "ACCESSION_DATA_*"
 
@@ -23,7 +22,7 @@ aws s3 cp s3://neogenomics-caylent-shared-data-daas s3://caylent-poc-dl-landing/
 
 
 
-# Run Glue Jobs
+### Running Glue Jobs (landing -> raw)
 aws glue start-job-run \
   --job-name caylent-poc-etl-landing-to-raw \
   --arguments '{"--landing_bucket_name":"caylent-poc-dl-landing","--raw_bucket_name":"caylent-poc-dl-raw","--table_name":"accession_data"}'

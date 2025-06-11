@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     bucket         = "caylent-poc-terraform-state"
     key            = "terraform.tfstate"
-    region         = "us-east-1"  # You may want to adjust this region
+    region         = "us-east-1" # You may want to adjust this region
     dynamodb_table = "caylent-poc-terraform-lock"
     encrypt        = true
   }
@@ -16,5 +16,5 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"  # You may want to adjust this region
+  region = "us-east-1" # You may want to adjust this region
 }

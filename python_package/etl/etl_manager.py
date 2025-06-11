@@ -44,8 +44,6 @@ class EtlManager:
 
         return df
 
-
-
     def table_exists_in_glue_catalog(self, database_name, table_name):
         try:
             result = self.spark.sql(f"SHOW TABLES IN {database_name}").filter(f"tableName = '{table_name}'").count()

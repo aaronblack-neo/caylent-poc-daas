@@ -1,5 +1,5 @@
 locals {
-  raw_job_name              = "job_landing_to_raw.py"
+  raw_job_name = "job_landing_to_raw.py"
 
   spark_conf = <<EOT
  conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
