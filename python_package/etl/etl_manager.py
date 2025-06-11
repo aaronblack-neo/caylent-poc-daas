@@ -37,6 +37,11 @@ class EtlManager:
         timestamp_pattern = rf"{table.upper()}_(\d{{8}})"
         df = df.withColumn(TIMESTAMP_COLUMN_NAME, regexp_extract(input_file_name(), timestamp_pattern, 1))
 
+        # timestamp column to timestamp type
+        # timestamp is in format "YYYYMMDD" string
+        # df = df.withColumn(TIMESTAMP_COLUMN_NAME, regexp_extract(TIMESTAMP_COLUMN_NAME, r"(\d{4})(\d{2})(\d{2})", 1).cast("timestamp"))
+
+
         if self.table_exists_in_glue_catalog(target_database, table):
             df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").overwritePartitions()
         else:

@@ -143,3 +143,58 @@ resource "aws_iam_role_policy_attachment" "glue_lake_formation_admin_policy_atta
   role       = aws_iam_role.glue_etl_role.name
   policy_arn = "arn:aws:iam::aws:policy/AWSLakeFormationDataAdmin"
 }
+
+
+## Redshift
+
+# Create an IAM role for Redshift Spectrum
+resource "aws_iam_role" "redshift_spectrum_role" {
+  name = "redshift_spectrum_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "redshift.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+# Policy for Redshift Spectrum to access S3 and Glue Data Catalog
+resource "aws_iam_policy" "redshift_spectrum_policy" {
+  name        = "RedshiftSpectrumAccessPolicy"
+  description = "Policy to allow Redshift Spectrum access to S3 and Glue Data Catalog"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:Get*",
+          "s3:List*"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "glue:GetDatabase",
+          "glue:GetTable",
+          "glue:GetPartitions"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Attach the policy to the role
+resource "aws_iam_role_policy_attachment" "redshift_spectrum_policy_attachment" {
+  role       = aws_iam_role.redshift_spectrum_role.name
+  policy_arn = aws_iam_policy.redshift_spectrum_policy.arn
+}

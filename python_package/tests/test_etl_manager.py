@@ -8,4 +8,5 @@ def test_loading_data(glue_context):
 
     # Test processing a specific table
     table = "accession_data"
-    etl_manager.process_landing_data(table)
+    df = etl_manager.process_landing_data(table)
+    df.show()
