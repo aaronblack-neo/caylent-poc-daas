@@ -25,13 +25,19 @@ class EtlManager:
 
         # Read CSV files into a Spark DataFrame,
         # Use | separator
-        df = (
-            self.spark.read.format("csv")
-            .option("header", "true")
-            .option("inferSchema", "true")
-            .option("delimiter", "|")
-            .load(s3_input_path)
-        )
+        # df = (
+        #     self.spark.read.format("csv")
+        #     .option("header", "true")
+        #     .option("inferSchema", "true")
+        #     .option("delimiter", "|")
+        #     .load(s3_input_path)
+        # )
+        df = (self.spark.read.format("csv") \
+              .option("header", "true") \
+              .option("delimiter", "|") \
+              .option("quote", '"') \
+              .option("multiline", "true") \
+              .load(s3_input_path))
 
         # Extract timestamp from file names
         timestamp_pattern = rf"{table.upper()}_(\d{{8}})"

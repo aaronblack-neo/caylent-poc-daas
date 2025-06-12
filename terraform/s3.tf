@@ -27,7 +27,8 @@ resource "aws_s3_object" "landing_bucket_folders" {
     "client_data/",
     "doctor_data/",
     "image_data/",
-    "orders_fact_data/"
+    "orders_fact_data/",
+    "patient_data/"
   ])
 
   bucket = aws_s3_bucket.landing_bucket.id

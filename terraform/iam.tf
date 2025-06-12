@@ -183,9 +183,7 @@ resource "aws_iam_policy" "redshift_spectrum_policy" {
       {
         Effect = "Allow"
         Action = [
-          "glue:GetDatabase",
-          "glue:GetTable",
-          "glue:GetPartitions"
+          "glue:*"
         ]
         Resource = "*"
       }
