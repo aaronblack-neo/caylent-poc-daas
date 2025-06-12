@@ -32,7 +32,6 @@ class EtlManager:
             .option("delimiter", "|")
             .option("quote", '"')
             .option("multiline", "true")
-            .option("inferSchema", "true")
             .load(s3_input_path)
         )
 

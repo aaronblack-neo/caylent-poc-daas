@@ -48,7 +48,6 @@ aws glue start-job-run \
   --job-name caylent-poc-etl-landing-to-raw \
   --arguments '{"--landing_bucket_name":"caylent-poc-dl-landing","--raw_bucket_name":"caylent-poc-dl-raw","--table_name":"orders_fact_data"}'
 
-
 aws glue start-job-run \
   --job-name caylent-poc-etl-landing-to-raw \
   --arguments '{"--landing_bucket_name":"caylent-poc-dl-landing","--raw_bucket_name":"caylent-poc-dl-raw","--table_name":"patient_data"}'
