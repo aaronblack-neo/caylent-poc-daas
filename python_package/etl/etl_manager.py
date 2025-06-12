@@ -1,6 +1,6 @@
 import boto3
 
-from pyspark.sql.functions import regexp_extract, lit
+from pyspark.sql.functions import regexp_extract, lit, to_date
 from pyspark.sql.functions import regexp_extract, input_file_name
 
 
@@ -46,8 +46,7 @@ class EtlManager:
         df = df.withColumn(TIMESTAMP_COLUMN_NAME, regexp_extract(input_file_name(), timestamp_pattern, 1))
 
         # timestamp column to timestamp type
-        # timestamp is in format "YYYYMMDD" string
-        # df = df.withColumn(TIMESTAMP_COLUMN_NAME, regexp_extract(TIMESTAMP_COLUMN_NAME, r"(\d{4})(\d{2})(\d{2})", 1).cast("timestamp"))
+        df = df.withColumn(TIMESTAMP_COLUMN_NAME, to_date(df[TIMESTAMP_COLUMN_NAME], "yyyyMMdd"))
 
 
         if self.table_exists_in_glue_catalog(target_database, table):
