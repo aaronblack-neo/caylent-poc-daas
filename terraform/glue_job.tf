@@ -53,7 +53,7 @@ resource "aws_glue_job" "raw_job" {
   number_of_workers = "2"
 
   execution_property {
-    max_concurrent_runs = 5
+    max_concurrent_runs = 10
   }
 }
 
