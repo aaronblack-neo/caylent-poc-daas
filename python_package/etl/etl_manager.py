@@ -25,21 +25,16 @@ class EtlManager:
 
         # Read CSV files into a Spark DataFrame,
         # Use | separator
-        # df = (
-        #     self.spark.read.format("csv")
-        #     .option("header", "true")
-        #     .option("inferSchema", "true")
-        #     .option("delimiter", "|")
-        #     .load(s3_input_path)
-        # )
         # adds inferSchema option to automatically infer data types
-        df = (self.spark.read.format("csv") \
-              .option("header", "true") \
-              .option("delimiter", "|") \
-              .option("quote", '"') \
-              .option("multiline", "true") \
-              .option("inferSchema", "true") \
-              .load(s3_input_path))
+        df = (
+            self.spark.read.format("csv")
+            .option("header", "true")
+            .option("delimiter", "|")
+            .option("quote", '"')
+            .option("multiline", "true")
+            .option("inferSchema", "true")
+            .load(s3_input_path)
+        )
 
         # Extract timestamp from file names
         timestamp_pattern = rf"{table.upper()}_(\d{{8}})"
@@ -47,7 +42,6 @@ class EtlManager:
 
         # timestamp column to timestamp type
         df = df.withColumn(TIMESTAMP_COLUMN_NAME, to_date(df[TIMESTAMP_COLUMN_NAME], "yyyyMMdd"))
-
 
         if self.table_exists_in_glue_catalog(target_database, table):
             df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").overwritePartitions()
