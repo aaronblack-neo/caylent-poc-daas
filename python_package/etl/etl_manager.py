@@ -32,11 +32,13 @@ class EtlManager:
         #     .option("delimiter", "|")
         #     .load(s3_input_path)
         # )
+        # adds inferSchema option to automatically infer data types
         df = (self.spark.read.format("csv") \
               .option("header", "true") \
               .option("delimiter", "|") \
               .option("quote", '"') \
               .option("multiline", "true") \
+              .option("inferSchema", "true") \
               .load(s3_input_path))
 
         # Extract timestamp from file names
