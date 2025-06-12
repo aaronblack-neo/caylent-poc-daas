@@ -51,3 +51,26 @@ aws glue start-job-run \
 aws glue start-job-run \
   --job-name caylent-poc-etl-landing-to-raw \
   --arguments '{"--landing_bucket_name":"caylent-poc-dl-landing","--raw_bucket_name":"caylent-poc-dl-raw","--table_name":"patient_data"}'
+
+
+
+
+  select *
+  from orders_fact_data ofd
+  join accession_data ad
+         on ofd.accession_hub_id = ad.accession_hub_id
+  join case_data cd
+         on ofd.case_hub_id = cd.case_hub_id
+  join patient_data pd
+         on ofd.patient_hub_id = pd.patient_hub_id
+  join client_data cld
+         on ofd.client_hub_id = cld.client_hub_id
+  join doctor_data odd
+         on ofd.ordering_doctor_hub_id = odd.doctor_hub_id
+  join doctor_data tdd
+         on ofd.treating_doctor_hub_id = tdd.doctor_hub_id
+  join image_data id
+         on ofd.test_order_hub_id = id.test_order_hub_id
+  join client_data cli
+         on ofd.client_hub_id = cli.client_hub_id
+  limit 10
