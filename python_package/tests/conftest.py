@@ -28,4 +28,3 @@ def glue_context():
     sc.setLogLevel("INFO")
     glue_context = GlueContext(sc)
     return glue_context
-

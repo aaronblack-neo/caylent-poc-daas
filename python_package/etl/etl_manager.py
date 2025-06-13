@@ -5,6 +5,7 @@ from pyspark.sql.functions import to_date
 TIMESTAMP_COLUMN_NAME = "timestamp"
 prefix = "organized_by_table"
 
+
 class EtlManager:
     def __init__(self, glue_context, landing_bucket_name, datalake_bucket_name):
         self.glue_client = boto3.client("glue", region_name="us-east-1")

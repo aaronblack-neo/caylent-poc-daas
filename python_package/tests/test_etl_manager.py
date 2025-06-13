@@ -6,7 +6,6 @@ from etl.config import landing_bucket_name, datalake_bucket_name
 def test_loading_data(glue_context):
     from etl.etl_manager import EtlManager
 
-
     etl_manager = EtlManager(glue_context, landing_bucket_name, datalake_bucket_name)
 
     # Test processing a specific table
