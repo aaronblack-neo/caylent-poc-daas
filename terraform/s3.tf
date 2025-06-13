@@ -4,9 +4,9 @@ resource "aws_s3_bucket" "datalake_bucket" {
   bucket = "caylent-poc-datalake"
 }
 
-# resource "aws_s3_bucket" "raw_bucket" {
-#   bucket = "caylent-poc-dl-raw"
-# }
+resource "aws_s3_bucket" "raw_bucket" {
+  bucket = "caylent-poc-dl-raw"
+}
 
 # glue scripts bucket
 resource "aws_s3_bucket" "glue_scripts_bucket" {

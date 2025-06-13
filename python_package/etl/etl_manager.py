@@ -1,11 +1,9 @@
 import boto3
-
-from pyspark.sql.functions import regexp_extract, lit, to_date
 from pyspark.sql.functions import regexp_extract, input_file_name
-
+from pyspark.sql.functions import to_date
 
 TIMESTAMP_COLUMN_NAME = "timestamp"
-
+prefix = "organized_by_table"
 
 class EtlManager:
     def __init__(self, glue_context, landing_bucket_name, datalake_bucket_name):
@@ -19,8 +17,7 @@ class EtlManager:
     def process_landing_data(self, table):
         # S3 bucket and prefix
 
-        s3_input_path = f"s3://{self.landing_bucket_name}/{table}"
-        iceberg_table_path = f"s3://{self.datalake_bucket_name}/tables/{table}/"
+        s3_input_path = f"s3://{self.landing_bucket_name}/{prefix}/{table}"
         target_database = "raw"
 
         # Read CSV files into a Spark DataFrame,

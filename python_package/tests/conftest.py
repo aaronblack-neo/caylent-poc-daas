@@ -1,28 +1,7 @@
 import pytest
 from pyspark.sql import SparkSession
 from awsglue.context import GlueContext
-
 from etl.config import datalake_bucket_name
-
-
-@pytest.fixture(scope="session")
-def spark_session():
-    spark = (
-        SparkSession.builder.appName("PySpark App")
-        .config("spark.sql.debug.maxToStringFields", "100")
-        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
-        .config(
-            "spark.jars.packages",
-            "org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk-bundle:1.11.375",
-        )
-        .config(
-            "spark.hadoop.fs.s3a.aws.credentials.provider",
-            "com.amazonaws.auth.DefaultAWSCredentialsProviderChain",
-        )
-        .config("spark.hadoop.fs.s3a.endpoint", "s3.amazonaws.com")
-        .getOrCreate()
-    )
-    return spark
 
 
 @pytest.fixture(scope="session")
@@ -50,5 +29,3 @@ def glue_context():
     glue_context = GlueContext(sc)
     return glue_context
 
-
-# --conf spark.sql.catalog.glue_catalog.default-namespace=stage
