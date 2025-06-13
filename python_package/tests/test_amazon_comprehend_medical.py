@@ -1,4 +1,4 @@
-
+import time
 
 import boto3
 from pyspark.sql.functions import udf
@@ -91,6 +91,10 @@ def test_comprehend_for_a_paticular_order():
 
 def test_comprehend_medical_over_case_data_sample_table(glue_context):
     case_df = read_case_data(glue_context)
+    # 11507730, 11690041:
+    # filter those case_hub_ids
+    print("Count:", case_df.count())
+    #case_df = case_df.filter(case_df.CASE_HUB_ID.isin(["507730", "11690041"]))
 
     rows = case_df.collect()
 
@@ -104,9 +108,13 @@ def test_comprehend_medical_over_case_data_sample_table(glue_context):
         if not case_interpretation:
             continue
 
+
         response = comprehend_medical_client.detect_entities_v2(Text=case_interpretation)
         detected_entities = [entity["Text"] for entity in response.get("Entities", [])]
+        print(f"Detected entities for case_hub_id {case_hub_id}: {detected_entities}")
         processed_rows.append(Row(case_hub_id=case_hub_id, case_interpretation=case_interpretation, detected_entities=detected_entities))
+
+        time.sleep(0.01)
 
     # Create a new DataFrame with the processed rows
     spark = glue_context.spark_session
