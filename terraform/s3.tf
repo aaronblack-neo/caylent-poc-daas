@@ -1,12 +1,12 @@
 
 
-resource "aws_s3_bucket" "landing_bucket" {
-  bucket = "caylent-poc-dl-landing"
+resource "aws_s3_bucket" "datalake_bucket" {
+  bucket = "caylent-poc-datalake"
 }
 
-resource "aws_s3_bucket" "raw_bucket" {
-  bucket = "caylent-poc-dl-raw"
-}
+# resource "aws_s3_bucket" "raw_bucket" {
+#   bucket = "caylent-poc-dl-raw"
+# }
 
 # glue scripts bucket
 resource "aws_s3_bucket" "glue_scripts_bucket" {
@@ -20,17 +20,17 @@ resource "aws_s3_bucket" "athena_query_results_bucket" {
 
 
 # create folders in raw bucket
-resource "aws_s3_object" "landing_bucket_folders" {
-  for_each = toset([
-    "accession_data/",
-    "case_data/",
-    "client_data/",
-    "doctor_data/",
-    "image_data/",
-    "orders_fact_data/",
-    "patient_data/"
-  ])
-
-  bucket = aws_s3_bucket.landing_bucket.id
-  key    = each.value
-}
+# resource "aws_s3_object" "landing_bucket_folders" {
+#   for_each = toset([
+#     "accession_data/",
+#     "case_data/",
+#     "client_data/",
+#     "doctor_data/",
+#     "image_data/",
+#     "orders_fact_data/",
+#     "patient_data/"
+#   ])
+#
+#   bucket = aws_s3_bucket.datalake_bucket.id
+#   key    = each.value
+# }

@@ -14,7 +14,7 @@ args = getResolvedOptions(
     [
         "JOB_NAME",
         "landing_bucket_name",
-        "raw_bucket_name",
+        "datalake_bucket_name",
         "table_name",
     ],
 )
@@ -29,13 +29,13 @@ logger = glueContext.get_logger()
 # Retrieve parameters from the job arguments
 
 landing_bucket_name = args["landing_bucket_name"]
-raw_bucket_name = args["raw_bucket_name"]
+datalake_bucket_name = args["datalake_bucket_name"]
 table_name = args["table_name"]
 
 etl_manager = EtlManager(
     glueContext,
     landing_bucket_name=landing_bucket_name,
-    raw_bucket_name=raw_bucket_name,
+    datalake_bucket_name=datalake_bucket_name,
 )
 latest_data_df = etl_manager.process_landing_data(table=table_name)
 

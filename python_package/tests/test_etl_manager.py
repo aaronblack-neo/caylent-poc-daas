@@ -1,13 +1,13 @@
 from pyspark.sql.functions import input_file_name, regexp_extract, to_date
 
+from etl.config import landing_bucket_name, datalake_bucket_name
+
 
 def test_loading_data(glue_context):
     from etl.etl_manager import EtlManager
 
-    landing_bucket_name = "caylent-poc-dl-landing"
-    raw_bucket_name = "caylent-poc-dl-raw"
 
-    etl_manager = EtlManager(glue_context, landing_bucket_name, raw_bucket_name)
+    etl_manager = EtlManager(glue_context, landing_bucket_name, datalake_bucket_name)
 
     # Test processing a specific table
     # table = "accession_data"
@@ -17,7 +17,7 @@ def test_loading_data(glue_context):
 
 
 def test_reading_case_data(glue_context):
-    input_csv_path = "s3://caylent-poc-dl-landing/case_data/"
+    input_csv_path = f"s3://{landing_bucket_name}/organized_by_table/case_data/"
     spark = glue_context.spark_session
 
     # case_hub_id
@@ -43,7 +43,7 @@ def test_reading_case_data(glue_context):
 
 
 def test_reading_accession_data(glue_context):
-    input_csv_path = "s3://caylent-poc-dl-landing/accession_data"
+    input_csv_path = f"s3://{landing_bucket_name}/organized_by_table/accession_data/"
     spark = glue_context.spark_session
     table = "accession_data"
 

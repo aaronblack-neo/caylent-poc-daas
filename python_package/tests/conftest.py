@@ -2,7 +2,7 @@ import pytest
 from pyspark.sql import SparkSession
 from awsglue.context import GlueContext
 
-from etl.config import raw_bucket_name
+from etl.config import datalake_bucket_name
 
 
 @pytest.fixture(scope="session")
@@ -31,7 +31,7 @@ def glue_context():
         SparkSession.builder.appName("Iceberg Spark Session")
         .master("local[*]")
         .config("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
-        .config(f"spark.sql.catalog.glue_catalog.warehouse", f"s3://{raw_bucket_name}/test_datalake")
+        .config(f"spark.sql.catalog.glue_catalog.warehouse", f"s3://{datalake_bucket_name}/test_datalake")
         .config("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
         .config("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
         .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")

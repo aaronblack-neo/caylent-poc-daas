@@ -4,7 +4,7 @@ locals {
   spark_conf = <<EOT
  conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
  --conf spark.sql.catalog.glue_catalog=org.apache.iceberg.spark.SparkCatalog
- --conf spark.sql.catalog.glue_catalog.warehouse=s3://${aws_s3_bucket.raw_bucket.id}/datalake
+ --conf spark.sql.catalog.glue_catalog.warehouse=s3://${aws_s3_bucket.datalake_bucket.id}/datalake
  --conf spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog
  --conf spark.sql.catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO
  --conf spark.sql.defaultCatalog=glue_catalog
@@ -42,8 +42,8 @@ resource "aws_glue_job" "raw_job" {
     "--enable-continuous-cloudwatch-log" = "true"
     "--enable-spark-ui"                  = "true"
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
-    "--landing_bucket_name"              = aws_s3_bucket.landing_bucket.id
-    "--raw_bucket_name"                  = aws_s3_bucket.raw_bucket.id
+    "--landing_bucket_name"              = local.client_landing_bucket
+    "--datalake_bucket_name"             = aws_s3_bucket.datalake_bucket.id
     "--table_name"                       = "accession_data"
     "--conf"                             = trim(local.spark_conf, "\n")
   }
