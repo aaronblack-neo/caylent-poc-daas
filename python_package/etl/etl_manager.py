@@ -54,6 +54,3 @@ class EtlManager:
         except Exception as e:
             self.logger.error(f"Error checking table existence: {e}")
             return False
-
-
-

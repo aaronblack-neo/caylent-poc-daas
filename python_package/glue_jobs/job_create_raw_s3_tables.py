@@ -27,7 +27,7 @@ logger = glueContext.get_logger()
 ######################################################
 landing_bucket_name = "neogenomics-caylent-shared-data-daas"
 def read_case_data(glue_context):
-    input_csv_path = f"s3://{landing_bucket_name}/organized_by_table/case_data/CASE_DATA_20250609_0_0_0.csv"
+    input_csv_path = f"s3://{landing_bucket_name}/organized_by_table/case_data"
     spark = glue_context.spark_session
     df = (
         spark.read.format("csv")
