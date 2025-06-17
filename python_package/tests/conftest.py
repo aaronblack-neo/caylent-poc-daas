@@ -92,3 +92,30 @@ def s3_tables_context():
     sc.setLogLevel("INFO")
     glue_context = GlueContext(sc)
     return glue_context
+
+
+@pytest.fixture(scope="session")
+def s3_tables_iceberg_context():
+    spark = SparkSession.builder.appName("S3TablesSparkSession") \
+        .master("local[*]") \
+        .config(
+            "spark.jars.packages",
+            "org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.1,software.amazon.awssdk:bundle:2.20.160,software.amazon.awssdk:url-connection-client:2.20.160",
+        ) \
+        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
+        .config("spark.sql.defaultCatalog", "s3tablesbucket") \
+        .config("spark.sql.catalog.s3tablesbucket", "org.apache.iceberg.spark.SparkCatalog") \
+        .config("spark.sql.catalog.s3tablesbucket.catalog-impl", "software.amazon.s3tables.iceberg.S3TablesCatalog") \
+        .config("spark.sql.catalog.s3tablesbucket.warehouse", f"arn:aws:s3tables:{region}:{account_id}:bucket/{s3_bucket_name}") \
+        .config("spark.hadoop.fs.s3a.connection.timeout", "300000") \
+    .config("spark.hadoop.fs.s3a.connection.maximum", "100") \
+    .config("spark.hadoop.fs.s3a.attempts.maximum", "20") \
+    .config("spark.hadoop.fs.s3a.socket.timeout", "300000") \
+    .config("spark.hadoop.fs.s3a.retry.limit", "15") \
+    .config("spark.hadoop.fs.s3a.retry.interval", "2000") \
+        .getOrCreate()
+
+    sc = spark.sparkContext
+    sc.setLogLevel("INFO")
+    glue_context = GlueContext(sc)
+    return glue_context

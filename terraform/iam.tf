@@ -35,12 +35,14 @@ resource "aws_iam_policy" "glue_scripts_access" {
           "s3:GetObject",
           "s3:ListBucket",
           "s3:PutObject",
-          "s3:DeleteObject"
+          "s3:DeleteObject",
+          "s3tables:*"
         ]
         Resource = [
           "arn:aws:s3:::${aws_s3_bucket.glue_scripts_bucket.id}*",
           "arn:aws:s3:::${aws_s3_bucket.datalake_bucket.id}*",
-          "arn:aws:s3:::${local.client_landing_bucket}*"
+          "arn:aws:s3:::${local.client_landing_bucket}*",
+          "arn:aws:s3tables:us-east-1:${local.account_id}:bucket/*"
         ]
       }
     ]
@@ -84,7 +86,7 @@ resource "aws_iam_role_policy_attachment" "glue_service_role_policy_attachment" 
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
 
-resource "aws_iam_policy" "glue_step_function_access" {
+resource "aws_iam_policy" "glue_permissions" {
   name        = "GlueStepFunctionAccessPolicy"
   description = "Policy to allow Step Functions to start Glue jobs and manage crawlers"
   policy = jsonencode({
@@ -101,7 +103,14 @@ resource "aws_iam_policy" "glue_step_function_access" {
           "glue:GetCrawler",
           "glue:GetCrawlers",
           "glue:StopCrawler",
-          "glue:UpdateCrawler"
+          "glue:UpdateCrawler",
+          "glue:GetCatalog",
+          "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:GetTable",
+          "glue:GetTables",
+          "glue:CreateTable",
+          "glue:UpdateTable"
         ]
         Resource = "*"
       }
@@ -111,7 +120,7 @@ resource "aws_iam_policy" "glue_step_function_access" {
 
 resource "aws_iam_role_policy_attachment" "glue_step_function_policy_attachment" {
   role       = aws_iam_role.glue_etl_role.name
-  policy_arn = aws_iam_policy.glue_step_function_access.arn
+  policy_arn = aws_iam_policy.glue_permissions.arn
 }
 
 resource "aws_iam_policy" "step_function_execution_access" {
