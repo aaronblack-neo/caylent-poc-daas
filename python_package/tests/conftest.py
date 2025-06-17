@@ -54,29 +54,40 @@ s3_bucket_name = "caylent-poc-table-bucket"
 
 @pytest.fixture(scope="session")
 def s3_tables_context():
-    spark = (
-        SparkSession.builder.appName("S3 Tables Spark Session")
-        .master("local[*]")
-        .config(
-            "spark.jars.packages",
-            "org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.1,software.amazon.awssdk:bundle:2.20.160,software.amazon.awssdk:url-connection-client:2.20.160",
-        )
-        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
-        .config("spark.sql.defaultCatalog", "spark_catalog")
-        .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkCatalog")
-        .config("spark.sql.catalog.spark_catalog.type", "rest")
-        .config("spark.sql.catalog.spark_catalog.uri", f"https://s3tables.{region}.amazonaws.com/iceberg")
-        .config("spark.sql.catalog.spark_catalog.warehouse", f"arn:aws:s3tables:{region}:{account_id}:bucket/{s3_bucket_name}")
-        .config("spark.sql.catalog.spark_catalog.catalog-impl", "software.amazon.s3tables.iceberg.S3TablesCatalog")
-        .config("spark.sql.catalog.spark_catalog.rest.sigv4-enabled", "true")
-        .config("spark.sql.catalog.spark_catalog.rest.signing-name", "s3tables")
-        .config("spark.sql.catalog.spark_catalog.rest.signing-region", f"{region}")
-        .config("spark.sql.catalog.spark_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
-        #.config("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.SimpleAWSCredentialProvider")
-        .config("spark.hadoop.fs.s3a.aws.credentials.provider", "com.amazonaws.auth.profile.ProfileCredentialsProvider")
-        .config("spark.sql.catalog.spark_catalog.rest-metrics-reporting-enabled", "false")
+    # spark = (
+    #     SparkSession.builder.appName("S3 Tables Spark Session")
+    #     .master("local[*]")
+    #     .config(
+    #         "spark.jars.packages",
+    #         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.1,software.amazon.awssdk:bundle:2.20.160,software.amazon.awssdk:url-connection-client:2.20.160",
+    #     )
+    #     .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
+    #     .config("spark.sql.defaultCatalog", "spark_catalog")
+    #     .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkCatalog")
+    #     .config("spark.sql.catalog.spark_catalog.type", "rest")
+    #     .config("spark.sql.catalog.spark_catalog.uri", f"https://s3tables.{region}.amazonaws.com/iceberg")
+    #     .config("spark.sql.catalog.spark_catalog.warehouse", f"arn:aws:s3tables:{region}:{account_id}:bucket/{s3_bucket_name}")
+    #     .config("spark.sql.catalog.spark_catalog.catalog-impl", "software.amazon.s3tables.iceberg.S3TablesCatalog")
+    #     .config("spark.sql.catalog.spark_catalog.rest.sigv4-enabled", "true")
+    #     .config("spark.sql.catalog.spark_catalog.rest.signing-name", "s3tables")
+    #     .config("spark.sql.catalog.spark_catalog.rest.signing-region", f"{region}")
+    #     .config("spark.sql.catalog.spark_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
+    #     #.config("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.SimpleAWSCredentialProvider")
+    #     .config("spark.hadoop.fs.s3a.aws.credentials.provider", "com.amazonaws.auth.profile.ProfileCredentialsProvider")
+    #     .config("spark.sql.catalog.spark_catalog.rest-metrics-reporting-enabled", "false")
+    #     .getOrCreate()
+    # )
+
+    spark = SparkSession.builder.appName("S3TablesSparkSession") \
+        .master("local[*]") \
+        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
+        .config("spark.sql.defaultCatalog","s3tables") \
+        .config("spark.sql.catalog.s3tables", "org.apache.iceberg.spark.SparkCatalog") \
+        .config("spark.sql.catalog.s3tables.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog") \
+        .config("spark.sql.catalog.s3tables.glue.id", f"{account_id}:s3tablescatalog/{s3_bucket_name}") \
+        .config("spark.sql.catalog.s3tables.warehouse", f"s3://{s3_bucket_name}/warehouse/") \
         .getOrCreate()
-    )
+
     sc = spark.sparkContext
     sc.setLogLevel("INFO")
     glue_context = GlueContext(sc)

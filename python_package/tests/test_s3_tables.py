@@ -5,11 +5,8 @@ def test_reading_s3_tables(s3_tables_context):
         spark = s3_tables_context.spark_session
         spark.sql("show schemas in spark_catalog").show()
         spark.sql("show databases").show()
-        #case_df = read_case_data(glue_context)
 
-        # case_df.writeTo("s3tablesbucket.movies.movies_nonpartitioned") \
-        #     .tableProperty("format-version", "2") \
-        #     .createOrReplace()
+
 
 
 def test_writing_s3_tables(s3_tables_context):
@@ -17,7 +14,7 @@ def test_writing_s3_tables(s3_tables_context):
 
     case_df = read_case_data(s3_tables_context)
     case_df.show()
-    catalog = "spark_catalog"
+    # catalog = "spark_catalog"
     namespace = "caylent_poc_table_bucket_namespace"
     s3_table = "case_data_s3_table"
 
