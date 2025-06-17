@@ -2,6 +2,8 @@ import boto3
 from pyspark.sql.functions import regexp_extract, input_file_name
 from pyspark.sql.functions import to_date
 
+from etl.config import raw_s3_tables_schemas
+
 TIMESTAMP_COLUMN_NAME = "timestamp"
 prefix = "organized_by_table"
 
@@ -54,3 +56,32 @@ class EtlManager:
         except Exception as e:
             self.logger.error(f"Error checking table existence: {e}")
             return False
+
+
+    def process_landing_to_s3_table(self, table, namespace):
+        # S3 bucket and prefix
+
+        s3_input_path = f"s3://{self.landing_bucket_name}/{prefix}/{table}"
+
+        # Read CSV files into a Spark DataFrame,
+        # Use | separator
+        # adds inferSchema option to automatically infer data types
+        df = (
+            self.spark.read.format("csv")
+            .option("header", "true")
+            .option("delimiter", "|")
+            .option("quote", '"')
+            .option("multiline", "true")
+            .load(s3_input_path)
+        )
+        df.createOrReplaceTempView("data_temp_view")
+
+        self.spark.sql(raw_s3_tables_schemas[table])
+
+        self.logger.info(f"Writing to {namespace}.{table}")
+        self.spark.sql(f"""
+            INSERT INTO {namespace}.{table}
+            SELECT * FROM data_temp_view
+        """)
+
+        return df
