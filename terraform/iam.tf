@@ -205,3 +205,30 @@ resource "aws_iam_role_policy_attachment" "redshift_spectrum_policy_attachment" 
   role       = aws_iam_role.redshift_spectrum_role.name
   policy_arn = aws_iam_policy.redshift_spectrum_policy.arn
 }
+
+
+
+
+# Create ComprehendMedical policy
+resource "aws_iam_policy" "comprehend_medical_access" {
+  name        = "ComprehendMedicalAccessPolicy"
+  description = "Policy to allow access to ComprehendMedical DetectEntitiesV2"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "comprehendmedical:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Attach the policy to the Glue ETL role
+resource "aws_iam_role_policy_attachment" "comprehend_medical_policy_attachment" {
+  role       = aws_iam_role.glue_etl_role.name
+  policy_arn = aws_iam_policy.comprehend_medical_access.arn
+}
