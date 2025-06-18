@@ -12,7 +12,14 @@ resource "aws_s3tables_table_bucket" "table_bucket" {
   name = "caylent-poc-table-bucket"
 }
 
-resource "aws_s3tables_namespace" "table_bucket_namespace" {
-  namespace        = "caylent_poc_table_bucket_namespace"
+
+
+# resource "aws_s3tables_namespace" "table_bucket_namespace" {
+#   namespace        = "caylent_poc_table_bucket_namespace"
+#   table_bucket_arn = aws_s3tables_table_bucket.table_bucket.arn
+# }
+
+resource "aws_s3tables_namespace" "table_bucket_raw_namespace" {
+  namespace        = "raw"
   table_bucket_arn = aws_s3tables_table_bucket.table_bucket.arn
 }
