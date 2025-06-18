@@ -66,6 +66,7 @@ class EtlManager:
         # Read CSV files into a Spark DataFrame,
         # Use | separator
         # adds inferSchema option to automatically infer data types
+        self.logger.info(f"Reading data from: {s3_input_path}")
         df = (
             self.spark.read.format("csv")
             .option("header", "true")

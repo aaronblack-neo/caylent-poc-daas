@@ -6,7 +6,7 @@ from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark import SparkContext
 
-from etl.config import landing_bucket_name
+from etl.config import landing_bucket_name, raw_s3_tables_schemas
 from etl.etl_manager import EtlManager
 
 # Define the arguments we want to be able to pass to the job
@@ -14,6 +14,8 @@ args = getResolvedOptions(
     sys.argv,
     [
         "JOB_NAME",
+        "landing_bucket_name",
+        "raw_namespace"
     ],
 )
 
@@ -24,12 +26,13 @@ job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 logger = glueContext.get_logger()
 
-landing_bucket_name = "neogenomics-caylent-shared-data-daas"
-namespace = "caylent_poc_table_bucket_namespace"
+landing_bucket_name = args["landing_bucket_name"]
+namespace = args["raw_namespace"]
 
-tables = ["accession_data"]
+tables = list(raw_s3_tables_schemas.keys())
 
 for table in tables:
+    logger.info(f"Processing table: {table}")
     etl_manager = EtlManager(
         glueContext,
         landing_bucket_name=landing_bucket_name,
