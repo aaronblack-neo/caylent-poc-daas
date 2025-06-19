@@ -78,20 +78,23 @@ def s3_tables_context():
     #     .getOrCreate()
     # )
 
-    spark = SparkSession.builder.appName("S3TablesSparkSession") \
+    spark = (SparkSession.builder.appName("S3TablesSparkSession") \
         .master("local[*]") \
+        .config("spark.jars.packages", "org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.1,software.amazon.awssdk:bundle:2.20.160,software.amazon.awssdk:url-connection-client:2.20.160") \
         .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
+        .config("spark.jars", "/home/hadoop/workspace/python_package/jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar") \
         .config("spark.sql.defaultCatalog","s3tables") \
         .config("spark.sql.catalog.s3tables", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.s3tables.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog") \
-        .config("spark.sql.catalog.s3tables.glue.id", f"{account_id}:s3tablescatalog/{s3_bucket_name}") \
-        .config("spark.sql.catalog.s3tables.warehouse", f"s3://{s3_bucket_name}/warehouse/") \
-        .getOrCreate()
+        .config("spark.sql.catalog.s3tables.catalog-impl", "software.amazon.s3tables.iceberg.S3TablesCatalog") \
+        #.config("spark.sql.catalog.s3tables.glue.id", f"{account_id}:s3tablescatalog/{s3_bucket_name}") \
+        .config("spark.sql.catalog.s3tables.warehouse", f"arn:aws:s3tables:{region}:{account_id}:bucket/{s3_bucket_name}") \
+        .getOrCreate())
 
     sc = spark.sparkContext
     sc.setLogLevel("INFO")
     glue_context = GlueContext(sc)
     return glue_context
+
 
 
 @pytest.fixture(scope="session")
@@ -119,3 +122,6 @@ def s3_tables_iceberg_context():
     sc.setLogLevel("INFO")
     glue_context = GlueContext(sc)
     return glue_context
+
+
+#.config("spark.jars", "/Users/marcos.foglino/miscellaneous/neogenomics/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar")
