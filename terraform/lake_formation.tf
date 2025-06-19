@@ -1,5 +1,5 @@
 locals {
-  databases = ["raw"]
+  databases = [] #["raw"]
   roles     = [aws_iam_role.glue_etl_role.arn, "arn:aws:iam::664418979226:user/marcos.foglino@caylent.com", "arn:aws:iam::664418979226:user/bruno.souza@caylent.com"]
   databases_with_roles = flatten([
     for role in local.roles : [

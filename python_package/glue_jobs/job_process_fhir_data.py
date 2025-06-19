@@ -1,4 +1,6 @@
 import sys
+import boto3
+
 from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.transforms import *
@@ -7,8 +9,6 @@ from pyspark import SparkContext
 
 from pyspark.sql.types import Row
 import time
-
-from python_package.etl.config import namespace
 
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
@@ -27,27 +27,26 @@ logger = glueContext.get_logger()
 ##################################
 
 
-s3_input_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share/Medication"
-namespace = "raw"
+base_s3_input_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share"
+
+folders = ["Medication", "Patient", "Condition", "Observation", "Practitioner", "Encounter", "Procedure", "Location", "PractitionerRole"]
 
 
+for folder in folders:
+    s3_input_path = f"s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share/{folder}"
+    logger.info(f"Processing folder: {folder}")
 
+    # Read JSON files
+    df = (spark.read
+          .option("multiline", "true")
+          .option("inferSchema", "true")
+          .json(s3_input_path))
 
-# Read JSON files
-df = (spark.read
-      .option("multiline", "true")
-      #.option("inferSchema", "true")
-      .json(s3_input_path))
+    table_name = folder.lower()
+    df.writeTo(f"raw.{folder}") \
+        .tableProperty("format-version", "2") \
+        .createOrReplace()
 
-# Show schema and sample data
-logger.info(f"Schema: {df.printSchema()}")
-
-
-
-df.show(5, truncate=False)
-
-# Get total count
-logger.info(f"Total records: {df.count()}")
 
 ##################################
 job.commit()
