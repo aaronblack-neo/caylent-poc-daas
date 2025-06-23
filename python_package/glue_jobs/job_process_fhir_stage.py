@@ -35,7 +35,7 @@ for folder in folders:
     df = (spark.read
           .option("multiline", "true")
           .option("inferSchema", "true")
-          .json(f"{s3_fhir_base_path}/{folders[0]}"))
+          .json(f"{s3_fhir_base_path}/{folder}"))
 
 
     # make a switch case for each folder
