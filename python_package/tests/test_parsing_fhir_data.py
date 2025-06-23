@@ -130,3 +130,25 @@ def test_parsing_fhir_condition(s3_tables_context):
     df.show(10, truncate=False)
 
 
+def test_parsing_fhir_observation(s3_tables_context):
+
+    s3_condition_path_local = "tests/observation/"
+
+    # Get Spark session from Glue context
+    spark = s3_tables_context.spark_session
+    # Read JSON files
+    df = read_fhir_data(s3_condition_path_local, spark)
+    # Show schema and sample data
+    df.printSchema()
+    # select fields id, code
+    df = df.select("id",
+                col("category.text").alias("category_text"),
+                col("code.text").alias("code_text"),
+                col("effectiveDateTime").alias("effectiveDateTime"),
+                col("encounter.reference").alias("encounter_reference"),
+                col("text.div").alias("text_div"),
+                col("text.status").alias("text_status")
+                   )
+
+
+    df.show(10, truncate=False)
