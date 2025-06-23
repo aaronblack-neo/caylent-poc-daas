@@ -118,20 +118,15 @@ def test_parsing_fhir_condition(s3_tables_context):
 
     s3_condition_path_local = "tests/condition/"
 
-
     # Get Spark session from Glue context
     spark = s3_tables_context.spark_session
-
     # Read JSON files
     df = read_fhir_data(s3_condition_path_local, spark)
-
     # Show schema and sample data
     df.printSchema()
-
     # select fields id, code
     #df = df.select("id", "code", explode(col("code")).alias("code_exploded"))
     df = parse_fhir_condition(df)
-
     df.show(10, truncate=False)
 
 
