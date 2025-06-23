@@ -1,5 +1,7 @@
 from pyspark.sql.functions import udf, col, explode
 
+from python_package.etl.etl_helper import read_fhir_data, parse_fhir_condition
+
 
 def test_writing_fhir_data(s3_tables_context):
     s3_medication_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share/Medication/00025d1e-2042-4ac9-8e3a-8510629b0564.json"
@@ -69,7 +71,7 @@ def extract_ingredient(ingredients):
 
 
 
-    def test_parsing_fhir_data(s3_tables_context):
+def test_parsing_fhir_medication(s3_tables_context):
     def get_coding(code_obj):
         if code_obj and 'coding' in code_obj:
             print(f"Extracting coding from: {code_obj}")
@@ -81,7 +83,9 @@ def extract_ingredient(ingredients):
     # Register UDF
     extract_coding = udf(get_coding)
 
-    s3_medication_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share/Medication/00025d1e-2042-4ac9-8e3a-8510629b0564.json"
+    #s3_medication_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share/Medication/00025d1e-2042-4ac9-8e3a-8510629b0564.json"
+    s3_medication_path_local = "tests/medication/"
+
     #local_input_path = "/home/hadoop/workspace/00025d1e-2042-4ac9-8e3a-8510629b0564.json"
     #s3_patient_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share/Patient"
     #s3_condition_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share/Condition/000bfd2a-e951-5cec-b412-15a38c05dffe.json"
@@ -93,13 +97,14 @@ def extract_ingredient(ingredients):
     df = (spark.read
           .option("multiline", "true")
           .option("inferSchema", "true")
-          .json(s3_medication_path))
+          .json(s3_medication_path_local))
 
     # Show schema and sample data
+    df.printSchema()
 
     # select fields id, code
-    #df = df.select("id", "code", extract_coding(col("code")).alias("coding")) #  explode(col("code")).alias("exploded_code")
-    df.select("id", "code.text" ).show(1000, truncate=False)
+    df = df.select("id", "code", explode(col("ingredient")).alias("ingredients"))
+    df.select("id", col("code.text").alias("code_text"),  col("ingredients.itemCodeableConcept.text").alias("ingredient_text")).show(1000, truncate=False)
 
 
     # print("Schema:")
@@ -107,3 +112,26 @@ def extract_ingredient(ingredients):
 
     #print("\nSample Data:")
     #df.show(1, truncate=False)
+
+
+def test_parsing_fhir_condition(s3_tables_context):
+
+    s3_condition_path_local = "tests/condition/"
+
+
+    # Get Spark session from Glue context
+    spark = s3_tables_context.spark_session
+
+    # Read JSON files
+    df = read_fhir_data(s3_condition_path_local, spark)
+
+    # Show schema and sample data
+    df.printSchema()
+
+    # select fields id, code
+    #df = df.select("id", "code", explode(col("code")).alias("code_exploded"))
+    df = parse_fhir_condition(df)
+
+    df.show(10, truncate=False)
+
+
