@@ -155,7 +155,16 @@ raw_s3_tables_schemas = {
             patient_state string,
             patient_postal_code string
         )
-    """
+    """,
+
+    "patient_match_hub":
+    f"""
+        CREATE TABLE IF NOT EXISTS {namespace}.patient_match_hub (
+            id string,
+            resourceType string,
+            patient_hub_id string
+        )
+    """,
 }
 
 

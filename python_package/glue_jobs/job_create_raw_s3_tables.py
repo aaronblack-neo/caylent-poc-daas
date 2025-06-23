@@ -29,7 +29,8 @@ logger = glueContext.get_logger()
 landing_bucket_name = args["landing_bucket_name"]
 namespace = args["raw_namespace"]
 
-tables = list(raw_s3_tables_schemas.keys())
+#tables = list(raw_s3_tables_schemas.keys())
+tables = ["patient_match_hub"]
 
 for table in tables:
     logger.info(f"Processing table: {table}")
