@@ -17,7 +17,7 @@ class EtlManager:
         self.landing_bucket_name = landing_bucket_name
         self.datalake_bucket_name = datalake_bucket_name
 
-    def process_landing_data(self, table):
+    def process_landing_data(self, table, delimiter="|"):
         # S3 bucket and prefix
 
         s3_input_path = f"s3://{self.landing_bucket_name}/{prefix}/{table}"
@@ -29,7 +29,7 @@ class EtlManager:
         df = (
             self.spark.read.format("csv")
             .option("header", "true")
-            .option("delimiter", "|")
+            .option("delimiter", delimiter)
             .option("quote", '"')
             .option("multiline", "true")
             .load(s3_input_path)
@@ -58,7 +58,7 @@ class EtlManager:
             return False
 
 
-    def process_landing_to_s3_table(self, table, namespace):
+    def process_landing_to_s3_table(self, table, namespace, delimiter="|"):
         # S3 bucket and prefix
 
         s3_input_path = f"s3://{self.landing_bucket_name}/{prefix}/{table}"
@@ -70,7 +70,7 @@ class EtlManager:
         df = (
             self.spark.read.format("csv")
             .option("header", "true")
-            .option("delimiter", "|")
+            .option("delimiter", delimiter)
             .option("quote", '"')
             .option("multiline", "true")
             .load(s3_input_path)

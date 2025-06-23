@@ -69,7 +69,7 @@ def extract_ingredient(ingredients):
 
 
 
-def test_parsing_fhir_data(s3_tables_context):
+    def test_parsing_fhir_data(s3_tables_context):
     def get_coding(code_obj):
         if code_obj and 'coding' in code_obj:
             print(f"Extracting coding from: {code_obj}")
@@ -98,12 +98,12 @@ def test_parsing_fhir_data(s3_tables_context):
     # Show schema and sample data
 
     # select fields id, code
-    df = df.select("id", "code", extract_coding(col("code")).alias("coding"), explode(col("code")).alias("exploded_code"))
-    df.select("id", "exploded_code.coding").show(1, truncate=False)
+    #df = df.select("id", "code", extract_coding(col("code")).alias("coding")) #  explode(col("code")).alias("exploded_code")
+    df.select("id", "code.text" ).show(1000, truncate=False)
 
 
     # print("Schema:")
-    df.printSchema()
+    #df.printSchema()
 
     #print("\nSample Data:")
     #df.show(1, truncate=False)
