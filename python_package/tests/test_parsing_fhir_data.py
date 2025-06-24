@@ -166,3 +166,29 @@ def test_parsing_fhir_observation(glue_context):
 
     df.show(10, truncate=False)
     df.printSchema()
+
+def test_parsing_fhir_procedure(glue_context):
+    spark = glue_context.spark_session
+
+    table_name = "procedure"
+    # read iceberg table from raw
+    df = spark.sql(f"SELECT * FROM raw.{table_name}")
+
+
+    df.show(10, truncate=True)
+    df.printSchema()
+
+    df = df.select("id",
+                   col("code.text").alias("code_text"),
+                   col("encounter.reference").alias("encounter_reference"),
+                   #col("extension.valueString").alias("extension_value_string"),
+                   col("identifier.system").alias("identifier_system"),
+                   col("identifier.value").alias("identifier_value"),
+                   #col("meta.lastUpdated").alias("meta_lastUpdated"),
+                   #col("meta.versionId").alias("meta_versionId"),
+                   col("subject.reference").alias("subject_reference"),
+                   col("text.status").alias("text_status")
+                   )
+
+    df.show(10, truncate=False)
+    df.printSchema()

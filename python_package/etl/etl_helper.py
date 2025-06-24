@@ -43,6 +43,28 @@ def parse_fhir_medication(df):
                    col("ingredients.itemCodeableConcept.text").alias("ingredient_text"))
     return df
 
+
+def parse_fhir_procedure(df):
+    df = df.select("id",
+                   col("code.text").alias("code_text"),
+                   col("encounter.reference").alias("encounter_reference"),
+                   #col("extension.valueString").alias("extension_value_string"),
+                   col("identifier.system").alias("identifier_system"),
+                   col("identifier.value").alias("identifier_value"),
+                   #col("meta.lastUpdated").alias("meta_lastUpdated"),
+                   #col("meta.versionId").alias("meta_versionId"),
+                   col("subject.reference").alias("subject_reference"),
+                   col("text.status").alias("text_status")
+                   )
+    return df
+
+
+def parse_fhir_patient(df):
+    df = df.select("id",
+                   col("gender").alias("gender"),
+                   )
+    return df
+
 def write_to_table(df, namespace, table_name):
     df.writeTo(f"{namespace}.{table_name}") \
         .tableProperty("format-version", "2") \
