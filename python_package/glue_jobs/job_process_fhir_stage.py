@@ -32,7 +32,7 @@ namespace = args["namespace"]
 s3_fhir_base_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share"
 
 #tables = ["medication", "condition", "observation", "procedure", "patient", "practitioner","encounter"]
-tables = ["observation", "procedure", "patient","practitioner", "encounter"]
+tables = ["medication"]
 
 
 

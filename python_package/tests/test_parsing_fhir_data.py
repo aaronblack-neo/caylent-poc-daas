@@ -2,7 +2,7 @@ from pyspark.sql.functions import udf, col, explode
 
 from python_package.etl.etl_helper import parse_fhir_condition
 
-from etl.etl_helper import read_fhir_data, parse_fhir_practitioner
+from etl.etl_helper import read_fhir_data, parse_fhir_practitioner, parse_fhir_medication
 
 
 def test_writing_fhir_data(s3_tables_context):
@@ -71,7 +71,33 @@ def extract_ingredient(ingredients):
         return "ingredient"
     return None
 
+from pyspark.sql.functions import col, when, lit
 
+def safe_get(array_col, field, index=0):
+    """Safely get a field from an array of structs"""
+    return when(
+        col(array_col).isNotNull() & (col(array_col).getItem(index).isNotNull()),
+        col(array_col).getItem(index).getField(field)
+    ).otherwise(lit(None))
+
+def get_struct_field(array_col, field, index=0):
+    return when(
+        col(array_col).isNotNull() & (col(array_col).getItem(index).isNotNull()),
+        col(array_col).getItem(index).getField(field)
+    ).otherwise(lit(None))
+
+def get_ingredient_coding_field(df, field):
+    return when(
+        col("ingredient").isNotNull() &
+        col("ingredient").getItem(0).getField("itemCodeableConcept").isNotNull() &
+        col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").isNotNull() &
+        col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").getItem(0).isNotNull(),
+        col("ingredient").getItem(0)
+        .getField("itemCodeableConcept")
+        .getField("coding")
+        .getItem(0)
+        .getField(field)
+    ).otherwise(lit(None))
 
 def test_parsing_fhir_medication(s3_tables_context):
     def get_coding(code_obj):
@@ -105,8 +131,48 @@ def test_parsing_fhir_medication(s3_tables_context):
     df.printSchema()
 
     # select fields id, code
-    df = df.select("id", "code", explode(col("ingredient")).alias("ingredients"))
-    df.select("id", col("code.text").alias("code_text"),  col("ingredients.itemCodeableConcept.text").alias("ingredient_text")).show(1000, truncate=False)
+    df_flat = (df
+           .withColumn("code_text", col("code.text"))
+           .withColumn("first_coding_system", col("code.coding").getItem(0).getField("system"))
+           .withColumn("first_coding_code", col("code.coding").getItem(0).getField("code"))
+           .withColumn("first_coding_display", col("code.coding").getItem(0).getField("display"))
+           # Extract ingredient information if available
+           .withColumn("ingredient_text",
+                       when(col("ingredient").isNotNull() &
+                            col("ingredient").getItem(0).isNotNull() &
+                            col("ingredient").getItem(0).getField("itemCodeableConcept").isNotNull(),
+                            col("ingredient").getItem(0).getField("itemCodeableConcept").getField("text"))
+                       .otherwise(lit(None)))
+           .withColumn("ingredient_coding_code",
+                       when(col("ingredient").isNotNull() &
+                            col("ingredient").getItem(0).isNotNull() &
+                            col("ingredient").getItem(0).getField("itemCodeableConcept").isNotNull() &
+                            col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").isNotNull(),
+                            col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").getItem(0).getField("code"))
+                       .otherwise(lit(None)))
+           .withColumn("ingredient_coding_display",
+                       when(col("ingredient").isNotNull() &
+                            col("ingredient").getItem(0).isNotNull() &
+                            col("ingredient").getItem(0).getField("itemCodeableConcept").isNotNull() &
+                            col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").isNotNull(),
+                            col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").getItem(0).getField("display"))
+                       .otherwise(lit(None)))
+           )
+
+    df_flat = df_flat.select(
+        "id",
+        "code_text",
+        "first_coding_system",
+        "first_coding_code",
+        "first_coding_display",
+        "ingredient_text",
+        "ingredient_coding_code",
+        "ingredient_coding_display"
+    )
+
+
+    df_flat.show(10, truncate=True)
+    #df.select("id", col("code.text").alias("code_text"),  col("ingredients.itemCodeableConcept.text").alias("ingredient_text")).show(1000, truncate=False)
 
 
     # print("Schema:")

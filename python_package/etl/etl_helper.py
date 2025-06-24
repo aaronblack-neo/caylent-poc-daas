@@ -1,4 +1,4 @@
-from pyspark.sql.functions import col, explode
+from pyspark.sql.functions import col, explode, lit, when
 
 
 def read_fhir_data(s3_condition_path_local, spark):
@@ -38,10 +38,45 @@ def parse_fhir_observation(df):
     return df
 
 def parse_fhir_medication(df):
-    df = df.select("id", "code", explode(col("ingredient")).alias("ingredients"))
-    df = df.select("id", col("code.text").alias("code_text"),
-                   col("ingredients.itemCodeableConcept.text").alias("ingredient_text"))
-    return df
+    df_flat = (df
+               .withColumn("code_text", col("code.text"))
+               .withColumn("first_coding_system", col("code.coding").getItem(0).getField("system"))
+               .withColumn("first_coding_code", col("code.coding").getItem(0).getField("code"))
+               .withColumn("first_coding_display", col("code.coding").getItem(0).getField("display"))
+               # Extract ingredient information if available
+               .withColumn("ingredient_text",
+                           when(col("ingredient").isNotNull() &
+                                col("ingredient").getItem(0).isNotNull() &
+                                col("ingredient").getItem(0).getField("itemCodeableConcept").isNotNull(),
+                                col("ingredient").getItem(0).getField("itemCodeableConcept").getField("text"))
+                           .otherwise(lit(None)))
+               .withColumn("ingredient_coding_code",
+                           when(col("ingredient").isNotNull() &
+                                col("ingredient").getItem(0).isNotNull() &
+                                col("ingredient").getItem(0).getField("itemCodeableConcept").isNotNull() &
+                                col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").isNotNull(),
+                                col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").getItem(0).getField("code"))
+                           .otherwise(lit(None)))
+               .withColumn("ingredient_coding_display",
+                           when(col("ingredient").isNotNull() &
+                                col("ingredient").getItem(0).isNotNull() &
+                                col("ingredient").getItem(0).getField("itemCodeableConcept").isNotNull() &
+                                col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").isNotNull(),
+                                col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").getItem(0).getField("display"))
+                           .otherwise(lit(None)))
+               )
+
+    df_flat = df_flat.select(
+        "id",
+        "code_text",
+        "first_coding_system",
+        "first_coding_code",
+        "first_coding_display",
+        "ingredient_text",
+        "ingredient_coding_code",
+        "ingredient_coding_display"
+    )
+    return df_flat
 
 
 def parse_fhir_procedure(df):
