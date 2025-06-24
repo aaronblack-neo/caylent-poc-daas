@@ -140,9 +140,94 @@ def parse_fhir_practitioner(df):
                    )
     return df
 
+"""
+root
+ |-- class: struct (nullable = true)
+ |    |-- display: string (nullable = true)
+ |-- diagnosis: array (nullable = true)
+ |    |-- element: struct (containsNull = true)
+ |    |    |-- condition: struct (nullable = true)
+ |    |    |    |-- reference: string (nullable = true)
+ |    |    |-- rank: long (nullable = true)
+ |-- extension: array (nullable = true)
+ |    |-- element: struct (containsNull = true)
+ |    |    |-- url: string (nullable = true)
+ |    |    |-- valueString: string (nullable = true)
+ |-- hospitalization: struct (nullable = true)
+ |    |-- dischargeDisposition: struct (nullable = true)
+ |    |    |-- coding: array (nullable = true)
+ |    |    |    |-- element: struct (containsNull = true)
+ |    |    |    |    |-- code: string (nullable = true)
+ |    |    |    |    |-- display: string (nullable = true)
+ |    |    |    |    |-- system: string (nullable = true)
+ |    |    |-- text: string (nullable = true)
+ |-- id: string (nullable = true)
+ |-- identifier: array (nullable = true)
+ |    |-- element: struct (containsNull = true)
+ |    |    |-- assigner: struct (nullable = true)
+ |    |    |    |-- display: string (nullable = true)
+ |    |    |-- system: string (nullable = true)
+ |    |    |-- value: string (nullable = true)
+ |-- location: array (nullable = true)
+ |    |-- element: struct (containsNull = true)
+ |    |    |-- location: struct (nullable = true)
+ |    |    |    |-- reference: string (nullable = true)
+ |-- meta: struct (nullable = true)
+ |    |-- source: string (nullable = true)
+ |-- participant: array (nullable = true)
+ |    |-- element: struct (containsNull = true)
+ |    |    |-- individual: struct (nullable = true)
+ |    |    |    |-- reference: string (nullable = true)
+ |    |    |-- type: array (nullable = true)
+ |    |    |    |-- element: struct (containsNull = true)
+ |    |    |    |    |-- coding: array (nullable = true)
+ |    |    |    |    |    |-- element: struct (containsNull = true)
+ |    |    |    |    |    |    |-- code: string (nullable = true)
+ |    |    |    |    |    |    |-- system: string (nullable = true)
+ |    |    |    |    |-- text: string (nullable = true)
+ |-- period: struct (nullable = true)
+ |    |-- end: string (nullable = true)
+ |    |-- start: string (nullable = true)
+ |-- resourceType: string (nullable = true)
+ |-- status: string (nullable = true)
+ |-- subject: struct (nullable = true)
+ |    |-- reference: string (nullable = true)
+ |-- text: struct (nullable = true)
+ |    |-- div: string (nullable = true)
+ |    |-- status: string (nullable = true)
+ |-- type: array (nullable = true)
+ |    |-- element: struct (containsNull = true)
+ |    |    |-- coding: array (nullable = true)
+ |    |    |    |-- element: struct (containsNull = true)
+ |    |    |    |    |-- code: string (nullable = true)
+ |    |    |    |    |-- display: string (nullable = true)
+ |    |    |    |    |-- extension: array (nullable = true)
+ |    |    |    |    |    |-- element: struct (containsNull = true)
+ |    |    |    |    |    |    |-- url: string (nullable = true)
+ |    |    |    |    |    |    |-- valueInteger: long (nullable = true)
+ |    |    |    |    |    |    |-- valueString: string (nullable = true)
+ |    |    |    |    |-- system: string (nullable = true)
+ |    |    |-- text: string (nullable = true)"""
+
 def parse_fhir_encounter(df):
-    pass
-    #return df
+    df = df.select("id",
+                   col("class.display"),
+                   col("diagnosis.condition.reference").alias("diagnosis_condition_reference"),
+                   col("hospitalization.dischargeDisposition.text").alias("discharge_disposition_text"),
+                   col("identifier.assigner.display").alias("identifier_assigner_display"),
+                   col("identifier.value").alias("identifier_value"),
+                   col("location.location.reference").alias("location_location_reference"),
+                     col("meta.source").alias("meta_source"),
+                     col("participant.individual.reference").alias("participant_individual_reference"),
+                     col("period.start").alias("period_start"),
+                     col("period.end").alias("period_end"),
+                     col("resourceType").alias("resource_type"),
+                     col("status").alias("status"),
+                     col("subject.reference").alias("subject_reference"),
+                     col("text.status").alias("text_status"),
+                     col("type.text").alias("type_text"),
+                   )
+    return df
 
 def write_to_table(df, namespace, table_name):
     df.writeTo(f"{namespace}.{table_name}") \

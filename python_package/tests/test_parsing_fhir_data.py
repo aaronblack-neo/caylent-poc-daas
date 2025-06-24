@@ -3,7 +3,7 @@ from pyspark.sql.types import ArrayType, StringType
 
 from python_package.etl.etl_helper import parse_fhir_condition
 
-from etl.etl_helper import read_fhir_data, parse_fhir_practitioner, parse_fhir_medication
+from etl.etl_helper import read_fhir_data, parse_fhir_practitioner, parse_fhir_medication, parse_fhir_encounter
 
 
 def test_writing_fhir_data(s3_tables_context):
@@ -269,14 +269,7 @@ def test_parsing_fhir_encounter(glue_context):
     df.show(10, truncate=True)
     df.printSchema()
 
-    df = df.select("id",
-                   col("address").alias("address"),
-                   col("birthDate").alias("birthDate"),
-                   col("gender").alias("gender"),
-                   col("identifier").alias("identifier"),
-                   col("name").alias("name"),
-                   col("telecom").alias("telecom")
-                   )
+    df = parse_fhir_encounter(df)
 
     df.show(10, truncate=False)
     df.printSchema()
