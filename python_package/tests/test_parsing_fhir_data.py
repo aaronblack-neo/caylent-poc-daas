@@ -1,4 +1,5 @@
 from pyspark.sql.functions import udf, col, explode
+from pyspark.sql.types import ArrayType, StringType
 
 from python_package.etl.etl_helper import parse_fhir_condition
 
@@ -130,44 +131,28 @@ def test_parsing_fhir_medication(s3_tables_context):
     # Show schema and sample data
     df.printSchema()
 
-    # select fields id, code
-    df_flat = (df
-           .withColumn("code_text", col("code.text"))
-           .withColumn("first_coding_system", col("code.coding").getItem(0).getField("system"))
-           .withColumn("first_coding_code", col("code.coding").getItem(0).getField("code"))
-           .withColumn("first_coding_display", col("code.coding").getItem(0).getField("display"))
-           # Extract ingredient information if available
-           .withColumn("ingredient_text",
-                       when(col("ingredient").isNotNull() &
-                            col("ingredient").getItem(0).isNotNull() &
-                            col("ingredient").getItem(0).getField("itemCodeableConcept").isNotNull(),
-                            col("ingredient").getItem(0).getField("itemCodeableConcept").getField("text"))
-                       .otherwise(lit(None)))
-           .withColumn("ingredient_coding_code",
-                       when(col("ingredient").isNotNull() &
-                            col("ingredient").getItem(0).isNotNull() &
-                            col("ingredient").getItem(0).getField("itemCodeableConcept").isNotNull() &
-                            col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").isNotNull(),
-                            col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").getItem(0).getField("code"))
-                       .otherwise(lit(None)))
-           .withColumn("ingredient_coding_display",
-                       when(col("ingredient").isNotNull() &
-                            col("ingredient").getItem(0).isNotNull() &
-                            col("ingredient").getItem(0).getField("itemCodeableConcept").isNotNull() &
-                            col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").isNotNull(),
-                            col("ingredient").getItem(0).getField("itemCodeableConcept").getField("coding").getItem(0).getField("display"))
-                       .otherwise(lit(None)))
-           )
+    @udf(returnType=ArrayType(StringType()))
+    def extract_ingredient_codes(ingredients_array):
+        if not ingredients_array:
+            return []
 
-    df_flat = df_flat.select(
+        codes = []
+        for ingredient in ingredients_array:
+            if ingredient and "itemCodeableConcept" in ingredient:
+                item_concept = ingredient["itemCodeableConcept"]
+
+                if "coding" in item_concept and item_concept["coding"]:
+                    for coding in item_concept["coding"]:
+                        if "code" in coding:
+                            codes.append(coding["code"])
+
+        return codes
+
+    # select fields id, code
+    df_flat = df.select(
         "id",
-        "code_text",
-        "first_coding_system",
-        "first_coding_code",
-        "first_coding_display",
-        "ingredient_text",
-        "ingredient_coding_code",
-        "ingredient_coding_display"
+        col("code.text").alias("code_text"),
+        col("ingredient.itemCodeableConcept.text").alias("ingredient_text"),
     )
 
 
