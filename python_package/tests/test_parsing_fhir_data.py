@@ -1,6 +1,8 @@
 from pyspark.sql.functions import udf, col, explode
 
-from python_package.etl.etl_helper import read_fhir_data, parse_fhir_condition
+from python_package.etl.etl_helper import parse_fhir_condition
+
+from etl.etl_helper import read_fhir_data
 
 
 def test_writing_fhir_data(s3_tables_context):
@@ -130,25 +132,37 @@ def test_parsing_fhir_condition(s3_tables_context):
     df.show(10, truncate=False)
 
 
-def test_parsing_fhir_observation(s3_tables_context):
+def test_parsing_fhir_observation(glue_context):
+    spark = glue_context.spark_session
 
-    s3_condition_path_local = "tests/observation/"
+    table_name = "observation"
+    # read iceberg table from raw
+    df = spark.sql(f"SELECT * FROM raw.{table_name}")
 
-    # Get Spark session from Glue context
-    spark = s3_tables_context.spark_session
-    # Read JSON files
-    df = read_fhir_data(s3_condition_path_local, spark)
-    # Show schema and sample data
+    df = df.filter(col("id") == "02aa1d78-ac0c-43cd-bd3d-ac632800abc6")
+    df.show(10, truncate=True)
     df.printSchema()
-    # select fields id, code
+
     df = df.select("id",
                 col("category.text").alias("category_text"),
                 col("code.text").alias("code_text"),
                 col("effectiveDateTime").alias("effectiveDateTime"),
                 col("encounter.reference").alias("encounter_reference"),
-                col("text.div").alias("text_div"),
-                col("text.status").alias("text_status")
-                   )
+                ## col("extension.valueString").alias("extension_value_string"),
+                col("identifier.system").alias("identifier_system"),
+                col("identifier.value").alias("identifier_value"),
+                col("text.status").alias("text_status"),
+                #col("interpretation.coding").alias("interpretation_coding"),
+                ## col("code.coding.extension.url").alias("code_coding_extension_value_string"),
+                col("interpretation.coding").alias("interpretation_coding"),
+                col("subject.reference").alias("subject_reference"),
+                col("encounter.reference").alias("encounter_reference"),
+                col("valueQuantity.code").alias("valueQuantity_code"),
+                col("valueQuantity.system").alias("valueQuantity_system"),
+                col("valueQuantity.unit").alias("valueQuantity_unit"),
+                col("valueQuantity.value").alias("valueQuantity_value"),
+                col("valueString").alias("valueString"))
 
 
     df.show(10, truncate=False)
+    df.printSchema()

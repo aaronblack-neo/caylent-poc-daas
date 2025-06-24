@@ -16,7 +16,26 @@ def parse_fhir_condition(df):
                    col("subject.reference").alias("subject_reference"))
     return df
 
-
+def parse_fhir_observation(df):
+    df = df.select("id",
+                   col("category.text").alias("category_text"),
+                   col("code.text").alias("code_text"),
+                   col("effectiveDateTime").alias("effectiveDateTime"),
+                   col("encounter.reference").alias("encounter_reference"),
+                   ## col("extension.valueString").alias("extension_value_string"),
+                   col("identifier.system").alias("identifier_system"),
+                   col("identifier.value").alias("identifier_value"),
+                   col("text.status").alias("text_status"),
+                   #col("interpretation.coding").alias("interpretation_coding"),
+                   ## col("code.coding.extension.url").alias("code_coding_extension_value_string"),
+                   col("interpretation.coding").alias("interpretation_coding"),
+                   col("subject.reference").alias("subject_reference"),
+                   col("valueQuantity.code").alias("valueQuantity_code"),
+                   col("valueQuantity.system").alias("valueQuantity_system"),
+                   col("valueQuantity.unit").alias("valueQuantity_unit"),
+                   col("valueQuantity.value").alias("valueQuantity_value"),
+                   col("valueString").alias("valueString"))
+    return df
 
 def parse_fhir_medication(df):
     df = df.select("id", "code", explode(col("ingredient")).alias("ingredients"))

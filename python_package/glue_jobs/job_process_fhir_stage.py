@@ -7,7 +7,7 @@ from awsglue.utils import getResolvedOptions
 from pyspark import SparkContext
 
 
-from etl.etl_helper import write_to_table, parse_fhir_medication, parse_fhir_condition
+from etl.etl_helper import write_to_table, parse_fhir_medication, parse_fhir_condition, parse_fhir_observation
 
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
@@ -29,27 +29,25 @@ logger = glueContext.get_logger()
 namespace = args["namespace"]
 
 s3_fhir_base_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share"
-folders = [ "Condition"]
+tables = ["observation"]
 
-for folder in folders:
-    df = (spark.read
-          .option("multiline", "true")
-          .option("inferSchema", "true")
-          .json(f"{s3_fhir_base_path}/{folder}"))
+for table_name in tables:
+    df = spark.sql(f"SELECT * FROM raw.{table_name}")
 
 
     # make a switch case for each folder
-    match folder:
-        case "Medication":
+    match table_name:
+        case "medication":
             df = parse_fhir_medication(df)
-        case "Condition":
+        case "condition":
             df = parse_fhir_condition(df)
+        case "observation":
+            df = parse_fhir_observation(df)
         case _:
-            logger.error(f"Unknown folder: {folder}. Skipping to next folder.")
+            logger.error(f"Unknown table: {table_name}. Skipping to next folder.")
             continue
 
     # Write to Glue Catalog table
-    table_name = folder.lower()
     write_to_table(df, namespace, table_name)
 
 

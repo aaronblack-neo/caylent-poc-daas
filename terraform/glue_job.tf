@@ -121,7 +121,7 @@ resource "aws_s3_object" "fhir_job_script" {
 }
 
 resource "aws_glue_job" "fhir_job" {
-  name     = "caylent-poc-etl-parse-fhir"
+  name     = "caylent-poc-etl-fhir-to-raw"
   role_arn = aws_iam_role.glue_etl_role.arn
 
   command {
