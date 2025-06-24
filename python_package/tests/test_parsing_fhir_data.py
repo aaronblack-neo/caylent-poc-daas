@@ -1,5 +1,5 @@
 from pyspark.sql.functions import udf, col, explode
-from pyspark.sql.types import ArrayType, StringType
+from pyspark.sql.types import ArrayType, StringType, IntegerType
 
 from python_package.etl.etl_helper import parse_fhir_condition
 
@@ -273,3 +273,56 @@ def test_parsing_fhir_encounter(glue_context):
 
     df.show(10, truncate=False)
     df.printSchema()
+
+
+
+
+
+def test_parsing_fhir_medication_alternative(s3_tables_context):
+    s3_medication_path_local = "tests/medication/"
+    spark = s3_tables_context.spark_session
+
+    # Read JSON files
+    df = (spark.read
+          .option("multiline", "true")
+          .json(s3_medication_path_local))
+
+    # Define UDFs to extract specific values from extension array
+    @udf(returnType=IntegerType())
+    def extract_concept_id(extension_array):
+        if not extension_array:
+            return None
+
+        for ext in extension_array:
+            try:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:id" and "valueInteger" in ext:
+                    return ext["valueInteger"]
+            except (TypeError, KeyError):
+                pass
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_code(extension_array):
+        if not extension_array:
+            return None
+
+        for ext in extension_array:
+            try:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:code" and "valueString" in ext:
+                    return ext["valueString"]
+            except (TypeError, KeyError):
+                pass
+        return None
+
+    # Apply the UDFs to extract values from the first coding's extension
+    result_df = df.select(
+        "id",
+        extract_concept_id(col("code.coding").getItem(0).getField("extension")).alias("normalized_concept_id"),
+        extract_concept_code(col("code.coding").getItem(0).getField("extension")).alias("normalized_concept_code")
+    )
+
+    # Show results
+    result_df.printSchema()
+    result_df.show(truncate=False)
+
+
