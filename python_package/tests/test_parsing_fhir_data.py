@@ -2,7 +2,7 @@ from pyspark.sql.functions import udf, col, explode
 
 from python_package.etl.etl_helper import parse_fhir_condition
 
-from etl.etl_helper import read_fhir_data
+from etl.etl_helper import read_fhir_data, parse_fhir_practitioner
 
 
 def test_writing_fhir_data(s3_tables_context):
@@ -181,13 +181,50 @@ def test_parsing_fhir_procedure(glue_context):
     df = df.select("id",
                    col("code.text").alias("code_text"),
                    col("encounter.reference").alias("encounter_reference"),
-                   #col("extension.valueString").alias("extension_value_string"),
-                   col("identifier.system").alias("identifier_system"),
+                   col("category.coding.code").alias("category_coding_code"),
+                   col("category.coding.display").alias("category_coding_display"),
                    col("identifier.value").alias("identifier_value"),
-                   #col("meta.lastUpdated").alias("meta_lastUpdated"),
-                   #col("meta.versionId").alias("meta_versionId"),
                    col("subject.reference").alias("subject_reference"),
                    col("text.status").alias("text_status")
+                   )
+
+    df.show(10, truncate=False)
+    df.printSchema()
+
+def test_parsing_fhir_practitioner(glue_context):
+    spark = glue_context.spark_session
+
+    table_name = "practitioner"
+    # read iceberg table from raw
+    df = spark.sql(f"SELECT * FROM raw.{table_name}")
+
+
+    df.show(10, truncate=True)
+    df.printSchema()
+
+    df = parse_fhir_practitioner(df)
+
+    df.show(10, truncate=False)
+    df.printSchema()
+
+def test_parsing_fhir_encounter(glue_context):
+    spark = glue_context.spark_session
+
+    table_name = "encounter"
+    # read iceberg table from raw
+    df = spark.sql(f"SELECT * FROM raw.{table_name}")
+
+
+    df.show(10, truncate=True)
+    df.printSchema()
+
+    df = df.select("id",
+                   col("address").alias("address"),
+                   col("birthDate").alias("birthDate"),
+                   col("gender").alias("gender"),
+                   col("identifier").alias("identifier"),
+                   col("name").alias("name"),
+                   col("telecom").alias("telecom")
                    )
 
     df.show(10, truncate=False)
