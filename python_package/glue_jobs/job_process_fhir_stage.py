@@ -46,6 +46,7 @@ for table_name in tables:
     match table_name:
         case "medication":
             df = parse_fhir_medication_alternative(df)
+            write_to_table(df, namespace, table_name + '_first_element')
         case "condition":
             df = parse_fhir_condition(df)
         case "observation":
@@ -63,7 +64,7 @@ for table_name in tables:
             continue
 
     # Write to Glue Catalog table
-    write_to_table(df, namespace, table_name + '_alternative')
+    # write_to_table(df, namespace, table_name)
 
 
 

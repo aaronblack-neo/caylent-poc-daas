@@ -231,18 +231,42 @@ def parse_fhir_encounter(df):
 
 
 def parse_fhir_medication_alternative(df):
-    # Apply all UDFs to extract values
-    extension_col = col("code.coding").getItem(0).getField("extension")
-    result_df = df.select(
+    # Extract the normalized concept data from medication code
+    code_extension_col = col("code.coding").getItem(0).getField("extension")
+
+    # Get only the first ingredient
+    ingredient_df = df.select(
         "id",
-        extract_concept_id(extension_col).alias("normalized_concept_id"),
-        extract_concept_code(extension_col).alias("normalized_concept_code"),
-        extract_concept_name(extension_col).alias("normalized_concept_name"),
-        extract_concept_vocabulary_id(extension_col).alias("normalized_concept_vocabulary_id"),
-        extract_concept_standard(extension_col).alias("normalized_concept_standard"),
-        extract_concept_classification_cancer(extension_col).alias("normalized_concept_classification_cancer"),
-        extract_concept_domain(extension_col).alias("normalized_concept_domain"),
-        extract_concept_class(extension_col).alias("normalized_concept_class")
+        col("ingredient").getItem(0).alias("ingredient_item"),
+        code_extension_col.alias("code_extension")
+    )
+
+    # Extract the normalized concept data from the first ingredient
+    ingredient_extension_col = col("ingredient_item.itemCodeableConcept.coding").getItem(0).getField("extension")
+
+    # Create combined result with both sets of data
+    result_df = ingredient_df.select(
+        "id",
+        # Medication code fields
+        extract_concept_id(col("code_extension")).alias("medication_concept_id"),
+        extract_concept_code(col("code_extension")).alias("medication_concept_code"),
+        extract_concept_name(col("code_extension")).alias("medication_concept_name"),
+        extract_concept_vocabulary_id(col("code_extension")).alias("medication_concept_vocabulary_id"),
+        extract_concept_standard(col("code_extension")).alias("medication_concept_standard"),
+        extract_concept_classification_cancer(col("code_extension")).alias("medication_concept_classification_cancer"),
+        extract_concept_domain(col("code_extension")).alias("medication_concept_domain"),
+        extract_concept_class(col("code_extension")).alias("medication_concept_class"),
+
+        # Ingredient fields
+        col("ingredient_item.itemCodeableConcept.text").alias("ingredient_name"),
+        extract_concept_id(ingredient_extension_col).alias("ingredient_concept_id"),
+        extract_concept_code(ingredient_extension_col).alias("ingredient_concept_code"),
+        extract_concept_name(ingredient_extension_col).alias("ingredient_concept_name"),
+        extract_concept_vocabulary_id(ingredient_extension_col).alias("ingredient_concept_vocabulary_id"),
+        extract_concept_standard(ingredient_extension_col).alias("ingredient_concept_standard"),
+        extract_concept_classification_cancer(ingredient_extension_col).alias("ingredient_concept_classification_cancer"),
+        extract_concept_domain(ingredient_extension_col).alias("ingredient_concept_domain"),
+        extract_concept_class(ingredient_extension_col).alias("ingredient_concept_class")
     )
 
     return result_df

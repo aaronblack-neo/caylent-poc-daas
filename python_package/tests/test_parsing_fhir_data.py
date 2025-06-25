@@ -278,7 +278,7 @@ def test_parsing_fhir_encounter(glue_context):
 
 
 
-def test_parsing_fhir_medication_alternative(s3_tables_context):
+def test_parsing_fhir_medication_first_element(s3_tables_context):
     s3_medication_path_local = "tests/medication/"
     spark = s3_tables_context.spark_session
 
@@ -286,71 +286,6 @@ def test_parsing_fhir_medication_alternative(s3_tables_context):
     df = (spark.read
           .option("multiline", "true")
           .json(s3_medication_path_local))
-
-    # Define UDFs for all normalized concept fields
-    @udf(returnType=IntegerType())
-    def extract_concept_id(extension_array):
-        if extension_array:
-            for ext in extension_array:
-                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:id" and "valueInteger" in ext:
-                    return ext["valueInteger"]
-        return None
-
-    @udf(returnType=StringType())
-    def extract_concept_code(extension_array):
-        if extension_array:
-            for ext in extension_array:
-                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:code" and "valueString" in ext:
-                    return ext["valueString"]
-        return None
-
-    @udf(returnType=StringType())
-    def extract_concept_name(extension_array):
-        if extension_array:
-            for ext in extension_array:
-                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:name" and "valueString" in ext:
-                    return ext["valueString"]
-        return None
-
-    @udf(returnType=StringType())
-    def extract_concept_vocabulary_id(extension_array):
-        if extension_array:
-            for ext in extension_array:
-                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:vocabularyId" and "valueString" in ext:
-                    return ext["valueString"]
-        return None
-
-    @udf(returnType=StringType())
-    def extract_concept_standard(extension_array):
-        if extension_array:
-            for ext in extension_array:
-                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:standard" and "valueString" in ext:
-                    return ext["valueString"]
-        return None
-
-    @udf(returnType=BooleanType())
-    def extract_concept_classification_cancer(extension_array):
-        if extension_array:
-            for ext in extension_array:
-                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:classification:cancer" and "valueBoolean" in ext:
-                    return ext["valueBoolean"]
-        return None
-
-    @udf(returnType=StringType())
-    def extract_concept_domain(extension_array):
-        if extension_array:
-            for ext in extension_array:
-                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:domain" and "valueString" in ext:
-                    return ext["valueString"]
-        return None
-
-    @udf(returnType=StringType())
-    def extract_concept_class(extension_array):
-        if extension_array:
-            for ext in extension_array:
-                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:class" and "valueString" in ext:
-                    return ext["valueString"]
-        return None
 
     # Apply all UDFs to extract values
     extension_col = col("code.coding").getItem(0).getField("extension")
@@ -374,7 +309,7 @@ def test_parsing_fhir_medication_alternative(s3_tables_context):
 
 
 
-def test_parsing_fhir_medication_ingredients(s3_tables_context):
+def test_parsing_fhir_medication_ingredients_exploding(s3_tables_context):
     s3_medication_path_local = "tests/medication/"
     spark = s3_tables_context.spark_session
 
@@ -407,5 +342,97 @@ def test_parsing_fhir_medication_ingredients(s3_tables_context):
     # Show results
     result_df.printSchema()
     result_df.show(truncate=False)
+
+    return result_df
+
+
+def test_parsing_fhir_medication_ingredients_first_element(s3_tables_context):
+    s3_medication_path_local = "tests/medication/"
+    spark = s3_tables_context.spark_session
+
+    # Read JSON files
+    df = (spark.read
+          .option("multiline", "true")
+          .json(s3_medication_path_local))
+
+    # Extract the ingredient array and explode it to create one row per ingredient
+    # Get only the first ingredient instead of exploding the array
+    ingredient_df = df.select(
+        "id",
+        col("ingredient").getItem(0).alias("ingredient_item")
+    )
+
+    # Extract the normalized concept data from the first ingredient
+    extension_col = col("ingredient_item.itemCodeableConcept.coding").getItem(0).getField("extension")
+    result_df = ingredient_df.select(
+        "id",
+        col("ingredient_item.itemCodeableConcept.text").alias("ingredient_name"),
+        extract_concept_id(extension_col).alias("ingredient_concept_id"),
+        extract_concept_code(extension_col).alias("ingredient_concept_code"),
+        extract_concept_name(extension_col).alias("ingredient_concept_name"),
+        extract_concept_vocabulary_id(extension_col).alias("ingredient_concept_vocabulary_id"),
+        extract_concept_standard(extension_col).alias("ingredient_concept_standard"),
+        extract_concept_classification_cancer(extension_col).alias("ingredient_concept_classification_cancer"),
+        extract_concept_domain(extension_col).alias("ingredient_concept_domain"),
+        extract_concept_class(extension_col).alias("ingredient_concept_class")
+    )
+
+    # Show results
+    result_df.printSchema()
+    result_df.show(truncate=False)
+
+    return result_df
+
+
+def test_parsing_fhir_medication_combined(s3_tables_context):
+    s3_medication_path_local = "tests/medication/"
+    spark = s3_tables_context.spark_session
+
+    # Read JSON files
+    df = (spark.read
+          .option("multiline", "true")
+          .json(s3_medication_path_local))
+
+    # Extract the normalized concept data from medication code
+    code_extension_col = col("code.coding").getItem(0).getField("extension")
+
+    # Get only the first ingredient
+    ingredient_df = df.select(
+        "id",
+        col("ingredient").getItem(0).alias("ingredient_item"),
+        code_extension_col.alias("code_extension")
+    )
+
+    # Extract the normalized concept data from the first ingredient
+    ingredient_extension_col = col("ingredient_item.itemCodeableConcept.coding").getItem(0).getField("extension")
+
+    # Create combined result with both sets of data
+    result_df = ingredient_df.select(
+        "id",
+        # Medication code fields
+        extract_concept_id(col("code_extension")).alias("medication_concept_id"),
+        extract_concept_code(col("code_extension")).alias("medication_concept_code"),
+        extract_concept_name(col("code_extension")).alias("medication_concept_name"),
+        extract_concept_vocabulary_id(col("code_extension")).alias("medication_concept_vocabulary_id"),
+        extract_concept_standard(col("code_extension")).alias("medication_concept_standard"),
+        extract_concept_classification_cancer(col("code_extension")).alias("medication_concept_classification_cancer"),
+        extract_concept_domain(col("code_extension")).alias("medication_concept_domain"),
+        extract_concept_class(col("code_extension")).alias("medication_concept_class"),
+
+        # Ingredient fields
+        col("ingredient_item.itemCodeableConcept.text").alias("ingredient_name"),
+        extract_concept_id(ingredient_extension_col).alias("ingredient_concept_id"),
+        extract_concept_code(ingredient_extension_col).alias("ingredient_concept_code"),
+        extract_concept_name(ingredient_extension_col).alias("ingredient_concept_name"),
+        extract_concept_vocabulary_id(ingredient_extension_col).alias("ingredient_concept_vocabulary_id"),
+        extract_concept_standard(ingredient_extension_col).alias("ingredient_concept_standard"),
+        extract_concept_classification_cancer(ingredient_extension_col).alias("ingredient_concept_classification_cancer"),
+        extract_concept_domain(ingredient_extension_col).alias("ingredient_concept_domain"),
+        extract_concept_class(ingredient_extension_col).alias("ingredient_concept_class")
+    )
+
+    # Show results
+    result_df.printSchema()
+    result_df.show(truncate=True)
 
     return result_df
