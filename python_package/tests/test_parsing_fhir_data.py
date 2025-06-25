@@ -1,5 +1,5 @@
 from pyspark.sql.functions import udf, col, explode
-from pyspark.sql.types import ArrayType, StringType, IntegerType
+from pyspark.sql.types import ArrayType, StringType, IntegerType, BooleanType
 
 from python_package.etl.etl_helper import parse_fhir_condition
 
@@ -276,8 +276,6 @@ def test_parsing_fhir_encounter(glue_context):
 
 
 
-
-
 def test_parsing_fhir_medication_alternative(s3_tables_context):
     s3_medication_path_local = "tests/medication/"
     spark = s3_tables_context.spark_session
@@ -287,42 +285,89 @@ def test_parsing_fhir_medication_alternative(s3_tables_context):
           .option("multiline", "true")
           .json(s3_medication_path_local))
 
-    # Define UDFs to extract specific values from extension array
+    # Define UDFs for all normalized concept fields
     @udf(returnType=IntegerType())
     def extract_concept_id(extension_array):
-        if not extension_array:
-            return None
-
-        for ext in extension_array:
-            try:
+        if extension_array:
+            for ext in extension_array:
                 if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:id" and "valueInteger" in ext:
                     return ext["valueInteger"]
-            except (TypeError, KeyError):
-                pass
         return None
 
     @udf(returnType=StringType())
     def extract_concept_code(extension_array):
-        if not extension_array:
-            return None
-
-        for ext in extension_array:
-            try:
+        if extension_array:
+            for ext in extension_array:
                 if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:code" and "valueString" in ext:
                     return ext["valueString"]
-            except (TypeError, KeyError):
-                pass
         return None
 
-    # Apply the UDFs to extract values from the first coding's extension
+    @udf(returnType=StringType())
+    def extract_concept_name(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:name" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_vocabulary_id(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:vocabularyId" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_standard(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:standard" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    @udf(returnType=BooleanType())
+    def extract_concept_classification_cancer(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:classification:cancer" and "valueBoolean" in ext:
+                    return ext["valueBoolean"]
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_domain(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:domain" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_class(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:class" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    # Apply all UDFs to extract values
+    extension_col = col("code.coding").getItem(0).getField("extension")
     result_df = df.select(
         "id",
-        extract_concept_id(col("code.coding").getItem(0).getField("extension")).alias("normalized_concept_id"),
-        extract_concept_code(col("code.coding").getItem(0).getField("extension")).alias("normalized_concept_code")
+        extract_concept_id(extension_col).alias("normalized_concept_id"),
+        extract_concept_code(extension_col).alias("normalized_concept_code"),
+        extract_concept_name(extension_col).alias("normalized_concept_name"),
+        extract_concept_vocabulary_id(extension_col).alias("normalized_concept_vocabulary_id"),
+        extract_concept_standard(extension_col).alias("normalized_concept_standard"),
+        extract_concept_classification_cancer(extension_col).alias("normalized_concept_classification_cancer"),
+        extract_concept_domain(extension_col).alias("normalized_concept_domain"),
+        extract_concept_class(extension_col).alias("normalized_concept_class")
     )
 
     # Show results
     result_df.printSchema()
     result_df.show(truncate=False)
+
+    return result_df
 
 

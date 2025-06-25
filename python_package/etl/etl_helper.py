@@ -1,5 +1,5 @@
 from pyspark.sql.functions import col, explode, lit, when, udf
-from pyspark.sql.types import ArrayType, StringType
+from pyspark.sql.types import ArrayType, StringType, IntegerType, BooleanType
 
 
 def read_fhir_data(s3_condition_path_local, spark):
@@ -228,6 +228,90 @@ def parse_fhir_encounter(df):
                      col("type.text").alias("type_text"),
                    )
     return df
+
+
+def parse_fhir_medication_alternative(df):
+    # Define UDFs for all normalized concept fields
+    @udf(returnType=IntegerType())
+    def extract_concept_id(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:id" and "valueInteger" in ext:
+                    return ext["valueInteger"]
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_code(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:code" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_name(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:name" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_vocabulary_id(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:vocabularyId" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_standard(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:standard" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    @udf(returnType=BooleanType())
+    def extract_concept_classification_cancer(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:classification:cancer" and "valueBoolean" in ext:
+                    return ext["valueBoolean"]
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_domain(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:domain" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    @udf(returnType=StringType())
+    def extract_concept_class(extension_array):
+        if extension_array:
+            for ext in extension_array:
+                if "url" in ext and ext["url"] == "urn:omop:normalizedConcept:class" and "valueString" in ext:
+                    return ext["valueString"]
+        return None
+
+    # Apply all UDFs to extract values
+    extension_col = col("code.coding").getItem(0).getField("extension")
+    result_df = df.select(
+        "id",
+        extract_concept_id(extension_col).alias("normalized_concept_id"),
+        extract_concept_code(extension_col).alias("normalized_concept_code"),
+        extract_concept_name(extension_col).alias("normalized_concept_name"),
+        extract_concept_vocabulary_id(extension_col).alias("normalized_concept_vocabulary_id"),
+        extract_concept_standard(extension_col).alias("normalized_concept_standard"),
+        extract_concept_classification_cancer(extension_col).alias("normalized_concept_classification_cancer"),
+        extract_concept_domain(extension_col).alias("normalized_concept_domain"),
+        extract_concept_class(extension_col).alias("normalized_concept_class")
+    )
+
+    return result_df
+
 
 def write_to_table(df, namespace, table_name):
     df.writeTo(f"{namespace}.{table_name}") \
