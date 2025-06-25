@@ -18,12 +18,10 @@ EOT
 
   s3_tables_spark_conf = <<EOT
  conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
- --conf spark.jars.packages=org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.1,software.amazon.awssdk:bundle:2.20.160,software.amazon.awssdk:url-connection-client:2.20.160
  --conf spark.sql.defaultCatalog=s3tablesbucket
  --conf spark.sql.catalog.s3tablesbucket=org.apache.iceberg.spark.SparkCatalog
  --conf spark.sql.catalog.s3tablesbucket.catalog-impl=software.amazon.s3tables.iceberg.S3TablesCatalog
  --conf spark.sql.catalog.s3tablesbucket.warehouse=arn:aws:s3tables:${local.region}:${local.account_id}:bucket/${aws_s3tables_table_bucket.table_bucket.name}
- --conf spark.sql.parquet.mergeSchema=true
 EOT
 }
 
@@ -101,6 +99,8 @@ resource "aws_glue_job" "s3_tables_job" {
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
     "--landing_bucket_name"              = local.client_landing_bucket
     "--raw_namespace"                  = "raw"
+    "--user-jars-first" = "true"
+    "--datalake-formats" = "iceberg"
   }
 
   glue_version      = "5.0"

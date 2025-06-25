@@ -5,8 +5,6 @@ from awsglue.job import Job
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark import SparkContext
-
-from etl.config import landing_bucket_name, raw_s3_tables_schemas
 from etl.etl_manager import EtlManager
 
 # Define the arguments we want to be able to pass to the job
@@ -39,6 +37,6 @@ for table in tables:
         landing_bucket_name=landing_bucket_name,
         datalake_bucket_name=None,
     )
-    etl_manager.process_landing_to_s3_table(table=table, namespace=namespace)
+    etl_manager.process_landing_to_s3_table(table=table, namespace=namespace, delimiter=",")
 
 job.commit()
