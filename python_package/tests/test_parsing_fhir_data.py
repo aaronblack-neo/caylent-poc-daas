@@ -1,4 +1,4 @@
-from pyspark.sql.functions import udf
+from pyspark.sql.functions import udf, explode
 from pyspark.sql.types import ArrayType, StringType, IntegerType, BooleanType
 
 from python_package.etl.etl_helper import parse_fhir_condition
@@ -373,6 +373,7 @@ def test_parsing_fhir_medication_alternative(s3_tables_context):
     return result_df
 
 
+
 def test_parsing_fhir_medication_ingredients(s3_tables_context):
     s3_medication_path_local = "tests/medication/"
     spark = s3_tables_context.spark_session
@@ -382,9 +383,29 @@ def test_parsing_fhir_medication_ingredients(s3_tables_context):
           .option("multiline", "true")
           .json(s3_medication_path_local))
 
-
-    result_df = df.select(
+    # Extract the ingredient array and explode it to create one row per ingredient
+    ingredient_df = df.select(
         "id",
-        col("ingredient")
+        explode(col("ingredient")).alias("ingredient_item")
     )
-    result_df.show(10, truncate=False)
+
+    # Extract the normalized concept data from each ingredient
+    extension_col = col("ingredient_item.itemCodeableConcept.coding").getItem(0).getField("extension")
+    result_df = ingredient_df.select(
+        "id",
+        col("ingredient_item.itemCodeableConcept.text").alias("ingredient_name"),
+        extract_concept_id(extension_col).alias("ingredient_concept_id"),
+        extract_concept_code(extension_col).alias("ingredient_concept_code"),
+        extract_concept_name(extension_col).alias("ingredient_concept_name"),
+        extract_concept_vocabulary_id(extension_col).alias("ingredient_concept_vocabulary_id"),
+        extract_concept_standard(extension_col).alias("ingredient_concept_standard"),
+        extract_concept_classification_cancer(extension_col).alias("ingredient_concept_classification_cancer"),
+        extract_concept_domain(extension_col).alias("ingredient_concept_domain"),
+        extract_concept_class(extension_col).alias("ingredient_concept_class")
+    )
+
+    # Show results
+    result_df.printSchema()
+    result_df.show(truncate=False)
+
+    return result_df
