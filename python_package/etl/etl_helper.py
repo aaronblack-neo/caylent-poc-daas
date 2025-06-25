@@ -271,6 +271,61 @@ def parse_fhir_medication_alternative(df):
 
     return result_df
 
+def parse_fhir_medication_all_exploded(df):
+    # Part 1: Explode the code.coding array
+    exploded_coding_df = df.select(
+        "id",
+        explode(col("code.coding")).alias("coding_item")
+    )
+
+    # Extract the normalized concept data from each coding
+    coding_result_df = exploded_coding_df.select(
+        "id",
+        lit("medication").alias("source_type"),
+        col("coding_item.system").alias("system"),
+        col("coding_item.code").alias("code"),
+        col("coding_item.display").alias("display"),
+        extract_concept_id(col("coding_item.extension")).alias("normalized_concept_id"),
+        extract_concept_code(col("coding_item.extension")).alias("normalized_concept_code"),
+        extract_concept_name(col("coding_item.extension")).alias("normalized_concept_name"),
+        extract_concept_vocabulary_id(col("coding_item.extension")).alias("normalized_concept_vocabulary_id"),
+        extract_concept_standard(col("coding_item.extension")).alias("normalized_concept_standard"),
+        extract_concept_classification_cancer(col("coding_item.extension")).alias("normalized_concept_classification_cancer"),
+        extract_concept_domain(col("coding_item.extension")).alias("normalized_concept_domain"),
+        extract_concept_class(col("coding_item.extension")).alias("normalized_concept_class")
+    )
+
+    # Filter out when normalized_concept_standard is null
+    coding_result_df = coding_result_df.filter(col("normalized_concept_standard").isNotNull())
+
+    # Part 2: Explode the ingredient array
+    exploded_ingredient_df = df.select(
+        "id",
+        explode(col("ingredient")).alias("ingredient_item")
+    )
+
+    # Extract the normalized concept data from each ingredient
+    extension_col = col("ingredient_item.itemCodeableConcept.coding").getItem(0).getField("extension")
+    ingredient_result_df = exploded_ingredient_df.select(
+        "id",
+        lit("ingredient").alias("source_type"),
+        col("ingredient_item.itemCodeableConcept.coding").getItem(0).getField("system").alias("system"),
+        col("ingredient_item.itemCodeableConcept.coding").getItem(0).getField("code").alias("code"),
+        col("ingredient_item.itemCodeableConcept.text").alias("display"),
+        extract_concept_id(extension_col).alias("normalized_concept_id"),
+        extract_concept_code(extension_col).alias("normalized_concept_code"),
+        extract_concept_name(extension_col).alias("normalized_concept_name"),
+        extract_concept_vocabulary_id(extension_col).alias("normalized_concept_vocabulary_id"),
+        extract_concept_standard(extension_col).alias("normalized_concept_standard"),
+        extract_concept_classification_cancer(extension_col).alias("normalized_concept_classification_cancer"),
+        extract_concept_domain(extension_col).alias("normalized_concept_domain"),
+        extract_concept_class(extension_col).alias("normalized_concept_class")
+    )
+
+    # Combine both results
+    result_df = coding_result_df.union(ingredient_result_df)
+    return result_df
+
 
 def write_to_table(df, namespace, table_name):
     df.writeTo(f"{namespace}.{table_name}") \

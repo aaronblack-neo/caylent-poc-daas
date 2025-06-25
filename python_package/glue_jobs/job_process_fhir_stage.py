@@ -9,7 +9,7 @@ from pyspark import SparkContext
 
 from etl.etl_helper import write_to_table, parse_fhir_medication, parse_fhir_condition, parse_fhir_observation, \
     parse_fhir_procedure, parse_fhir_patient, parse_fhir_practitioner, parse_fhir_encounter, \
-    parse_fhir_medication_alternative
+    parse_fhir_medication_alternative, parse_fhir_medication_all_exploded
 
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
@@ -45,8 +45,8 @@ for table_name in tables:
     # make a switch case for each folder
     match table_name:
         case "medication":
-            df = parse_fhir_medication_alternative(df)
-            write_to_table(df, namespace, table_name + '_first_element')
+            df = parse_fhir_medication_all_exploded(df)
+            write_to_table(df, namespace, table_name + '_all_exploded')
         case "condition":
             df = parse_fhir_condition(df)
         case "observation":
