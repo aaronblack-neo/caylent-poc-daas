@@ -1,9 +1,11 @@
-from pyspark.sql.functions import udf, col, explode
+from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, StringType, IntegerType, BooleanType
 
 from python_package.etl.etl_helper import parse_fhir_condition
 
-from etl.etl_helper import read_fhir_data, parse_fhir_practitioner, parse_fhir_medication, parse_fhir_encounter
+from etl.etl_helper import read_fhir_data, parse_fhir_practitioner, parse_fhir_encounter, \
+    extract_concept_id, extract_concept_code, extract_concept_name, extract_concept_vocabulary_id, \
+    extract_concept_standard, extract_concept_classification_cancer, extract_concept_domain, extract_concept_class
 
 
 def test_writing_fhir_data(s3_tables_context):
@@ -371,3 +373,18 @@ def test_parsing_fhir_medication_alternative(s3_tables_context):
     return result_df
 
 
+def test_parsing_fhir_medication_ingredients(s3_tables_context):
+    s3_medication_path_local = "tests/medication/"
+    spark = s3_tables_context.spark_session
+
+    # Read JSON files
+    df = (spark.read
+          .option("multiline", "true")
+          .json(s3_medication_path_local))
+
+
+    result_df = df.select(
+        "id",
+        col("ingredient")
+    )
+    result_df.show(10, truncate=False)
