@@ -253,9 +253,6 @@ def parse_fhir_medication_all_exploded(df):
         extract_concept_class(col("coding_item.extension")).alias("class")
     )
 
-    # Filter out when normalized_concept_standard is null
-    #coding_result_df = coding_result_df.filter(col("standard").isNotNull())
-
     # Part 2: Explode the ingredient array
     exploded_ingredient_df = df.select(
         "id",
