@@ -1,5 +1,4 @@
 import sys
-import boto3
 
 from awsglue.context import GlueContext
 from awsglue.job import Job
@@ -7,8 +6,6 @@ from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark import SparkContext
 
-from pyspark.sql.types import Row
-import time
 
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(

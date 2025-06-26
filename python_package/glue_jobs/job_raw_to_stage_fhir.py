@@ -8,8 +8,6 @@ from pyspark import SparkContext
 
 from etl.etl_helper import write_to_table, parse_fhir_medication_all_exploded
 
-from python_package.etl.etl_helper import parse_fhir_condition
-
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
     sys.argv,
