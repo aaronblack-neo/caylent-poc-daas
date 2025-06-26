@@ -1,6 +1,5 @@
 locals {
   raw_job_name = "job_landing_to_raw.py"
-  s3_tables_job_name = "job_create_raw_s3_tables.py"
   fhir_job_name = "job_process_fhir_data.py"
   fhir_stage_job_name = "job_process_fhir_stage.py"
 
