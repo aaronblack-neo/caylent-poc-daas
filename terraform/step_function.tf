@@ -15,7 +15,7 @@ resource "aws_sfn_state_machine" "etl_orchestration" {
             States = {
               "ProcessCSVLandingToRaw" = {
                 Type       = "Task"
-                Resource   = "arn:aws:states:::glue:startJobRun"
+                Resource   = "arn:aws:states:::glue:startJobRun.sync"
                 Parameters = {
                   JobName = "caylent-poc-etl-landing-to-raw-csv"
                   Arguments = {
@@ -33,7 +33,7 @@ resource "aws_sfn_state_machine" "etl_orchestration" {
             States = {
               "ProcessFHIRLandingToRaw" = {
                 Type       = "Task"
-                Resource   = "arn:aws:states:::glue:startJobRun"
+                Resource   = "arn:aws:states:::glue:startJobRun.sync"
                 Parameters = {
                   JobName = "caylent-poc-etl-landing-to-raw-fhir"
                 }
@@ -52,7 +52,7 @@ resource "aws_sfn_state_machine" "etl_orchestration" {
             States = {
               "ProcessCSVRawToStage" = {
                 Type       = "Task"
-                Resource   = "arn:aws:states:::glue:startJobRun"
+                Resource   = "arn:aws:states:::glue:startJobRun.sync"
                 Parameters = {
                   JobName = "caylent-poc-etl-raw-to-stage-csv"
                 }
@@ -65,7 +65,7 @@ resource "aws_sfn_state_machine" "etl_orchestration" {
             States = {
               "ProcessFHIRRawToStage" = {
                 Type       = "Task"
-                Resource   = "arn:aws:states:::glue:startJobRun"
+                Resource   = "arn:aws:states:::glue:startJobRun.sync"
                 Parameters = {
                   JobName = "caylent-poc-etl-raw-to-stage-fhir"
                 }
