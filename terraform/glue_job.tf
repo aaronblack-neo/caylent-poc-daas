@@ -1,7 +1,7 @@
 locals {
-  raw_job_name = "job_landing_to_raw.py"
-  fhir_job_name = "job_process_fhir_data.py"
-  fhir_stage_job_name = "job_process_fhir_stage.py"
+  raw_job_name = "job_landing_to_raw_csv.py"
+  fhir_job_name = "job_landing_to_raw_fhir.py"
+  fhir_stage_job_name = "job_raw_to_stage_fhir.py"
 
   iceberg_spark_conf = <<EOT
  conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
@@ -12,15 +12,6 @@ locals {
  --conf spark.sql.defaultCatalog=glue_catalog
  --conf spark.sql.catalog.glue_catalog.default-namespace=raw
  --conf spark.sql.parquet.mergeSchema=true
-EOT
-
-
-  s3_tables_spark_conf = <<EOT
- conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
- --conf spark.sql.defaultCatalog=s3tablesbucket
- --conf spark.sql.catalog.s3tablesbucket=org.apache.iceberg.spark.SparkCatalog
- --conf spark.sql.catalog.s3tablesbucket.catalog-impl=software.amazon.s3tables.iceberg.S3TablesCatalog
- --conf spark.sql.catalog.s3tablesbucket.warehouse=arn:aws:s3tables:${local.region}:${local.account_id}:bucket/${aws_s3tables_table_bucket.table_bucket.name}
 EOT
 }
 
@@ -33,7 +24,7 @@ resource "aws_s3_object" "raw_glue_job_script" {
 }
 
 resource "aws_glue_job" "raw_job" {
-  name     = "caylent-poc-etl-landing-to-raw"
+  name     = "caylent-poc-etl-landing-to-raw-csv"
   role_arn = aws_iam_role.glue_etl_role.arn
 
   command {
@@ -76,7 +67,7 @@ resource "aws_s3_object" "fhir_job_script" {
 }
 
 resource "aws_glue_job" "fhir_job" {
-  name     = "caylent-poc-etl-fhir-to-raw"
+  name     = "caylent-poc-etl-landing-to-raw-fhir"
   role_arn = aws_iam_role.glue_etl_role.arn
 
   command {
@@ -119,7 +110,7 @@ resource "aws_s3_object" "fhir_stage_job_script" {
 }
 
 resource "aws_glue_job" "fhir_stage_job" {
-  name     = "caylent-poc-etl-parse-stage-fhir"
+  name     = "caylent-poc-raw-to-stage-fhir"
   role_arn = aws_iam_role.glue_etl_role.arn
 
   command {
