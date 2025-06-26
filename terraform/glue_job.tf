@@ -68,50 +68,6 @@ resource "aws_glue_job" "raw_job" {
 }
 
 
-## S3 Tables Job
-resource "aws_s3_object" "s3_tables_job_script" {
-  bucket = aws_s3_bucket.glue_scripts_bucket.id
-  key    = "glue_jobs/${local.s3_tables_job_name}"
-  source = "../python_package/glue_jobs/${local.s3_tables_job_name}"
-  etag   = filemd5("../python_package/glue_jobs/${local.s3_tables_job_name}")
-}
-
-resource "aws_glue_job" "s3_tables_job" {
-  name     = "caylent-poc-etl-create-s3-tables"
-  role_arn = aws_iam_role.glue_etl_role.arn
-
-  command {
-    script_location = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/${aws_s3_object.s3_tables_job_script.key}"
-    python_version  = "3"
-  }
-
-  default_arguments = {
-    "--job-language"                     = "python"
-    "--job-bookmark-option"              = "job-bookmark-disable"
-    "--enable-glue-datacatalog"          = "true"
-    "--enable-metrics"                   = "true"
-    "--enable-job-insights"              = "true"
-    "--enable-observability-metrics"     = "true"
-    "--enable-continuous-cloudwatch-log" = "true"
-    "--enable-spark-ui"                  = "true"
-    "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
-    #"--conf"                             = trim(local.s3_tables_spark_conf, "\n")
-    "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
-    "--landing_bucket_name"              = local.client_landing_bucket
-    "--raw_namespace"                  = "raw"
-    "--user-jars-first" = "true"
-    "--datalake-formats" = "iceberg"
-  }
-
-  glue_version      = "5.0"
-  worker_type       = "G.1X"
-  number_of_workers = "2"
-
-  execution_property {
-    max_concurrent_runs = 10
-  }
-}
-
 # FHIR Job to process FHIR data
 resource "aws_s3_object" "fhir_job_script" {
   bucket = aws_s3_bucket.glue_scripts_bucket.id
