@@ -10,9 +10,9 @@ prefix = "organized_by_table"
 
 class EtlManager:
     def __init__(self, glue_context, landing_bucket_name, datalake_bucket_name):
-        self.glue_client = boto3.client("glue", region_name="us-east-1")
+        #self.glue_client = boto3.client("glue", region_name="us-east-1")
         self.glue_context = glue_context
-        self.spark = glue_context.spark_session
+        self.spark = glue_context
         self.logger = glue_context.get_logger()
         self.landing_bucket_name = landing_bucket_name
         self.datalake_bucket_name = datalake_bucket_name
