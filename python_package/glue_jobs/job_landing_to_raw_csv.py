@@ -16,7 +16,6 @@ args = getResolvedOptions(
         "JOB_NAME",
         "landing_bucket_name",
         "datalake_bucket_name",
-        "table_name",
     ],
 )
 
@@ -31,11 +30,17 @@ logger = glueContext.get_logger()
 
 landing_bucket_name = args["landing_bucket_name"]
 datalake_bucket_name = args["datalake_bucket_name"]
-table_name = args["table_name"]
 
-tables = ["pati"]
+
+
+tables = raw_s3_tables_schemas.keys()
+
+logger.info(f"Tables to process: {tables}")
+
+tables = ["patient_match_hub"]
 
 for table_name in tables:
+    logger.info(f"Processing table: {table_name}")
     etl_manager = EtlManager(
         glueContext,
         landing_bucket_name=landing_bucket_name,

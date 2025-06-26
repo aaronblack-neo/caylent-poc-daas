@@ -176,7 +176,7 @@ raw_s3_tables_schemas = {
         """
     },
     "patient_match_hub": {
-        "delimiter": "|",
+        "delimiter": ",",
         "create_script": f"""
             CREATE TABLE IF NOT EXISTS {namespace}.patient_match_hub (
                 id string,

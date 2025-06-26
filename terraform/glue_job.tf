@@ -44,7 +44,6 @@ resource "aws_glue_job" "raw_job" {
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--landing_bucket_name"              = local.client_landing_bucket
     "--datalake_bucket_name"             = aws_s3_bucket.datalake_bucket.id
-    "--table_name"                       = "patient_match_hub"
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
   }
 
