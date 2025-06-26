@@ -43,6 +43,7 @@ for folder in folders:
         df.writeTo(f"raw.{table_name}") \
             .tableProperty("format-version", "2") \
             .createOrReplace()
+
     except:
         logger.error(f"Error processing folder {folder}. Skipping to next folder.")
 

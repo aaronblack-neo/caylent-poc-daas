@@ -92,7 +92,7 @@ resource "aws_glue_job" "fhir_job" {
   }
 
   glue_version      = "5.0"
-  worker_type       = "G.1X"
+  worker_type       = "G.2X"
   number_of_workers = "2"
 
   execution_property {

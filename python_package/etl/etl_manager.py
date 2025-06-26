@@ -34,17 +34,9 @@ class EtlManager:
             .load(s3_input_path)
         )
 
-        # Extract timestamp from file names
-        # timestamp_pattern = rf"{table.upper()}_(\d{{8}})"
-        # df = df.withColumn(TIMESTAMP_COLUMN_NAME, regexp_extract(input_file_name(), timestamp_pattern, 1))
-        #
-        # # timestamp column to timestamp type
-        # df = df.withColumn(TIMESTAMP_COLUMN_NAME, to_date(df[TIMESTAMP_COLUMN_NAME], "yyyyMMdd"))
-
-        if self.table_exists_in_glue_catalog(target_database, table):
-            df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").overwritePartitions()
-        else:
-            df.writeTo(f"{target_database}.{table}").tableProperty("format-version", "2").create()
+        df.writeTo(f"raw.{table}") \
+            .tableProperty("format-version", "2") \
+            .createOrReplace()
 
         return df
 
