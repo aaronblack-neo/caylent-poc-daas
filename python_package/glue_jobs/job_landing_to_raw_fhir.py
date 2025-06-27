@@ -26,6 +26,7 @@ logger = glueContext.get_logger()
 
 base_s3_input_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share"
 
+# prescribed folders
 folders = [
     "Medication",
     "Patient",
@@ -36,6 +37,7 @@ folders = [
     "Procedure",
     "Location",
     "PractitionerRole",
+    # "MedicationStatement"
 ]
 
 for folder in folders:

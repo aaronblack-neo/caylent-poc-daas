@@ -235,6 +235,10 @@ def parse_fhir_medication_all_exploded(df):
     return result_df
 
 
+def parse_fhir_medicationstatement(df):
+    pass
+    # return df
+
 def write_to_table(df, namespace, table_name):
     df.writeTo(f"{namespace}.{table_name}").tableProperty("format-version", "2").createOrReplace()
 

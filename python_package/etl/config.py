@@ -184,4 +184,8 @@ raw_s3_tables_schemas = {
             )
         """,
     },
+    # name of the folder 'new_table'
+    "new_table": {
+        "delimiter": "|",
+    }
 }

@@ -169,7 +169,6 @@ def test_parsing_fhir_medication(s3_tables_context):
     #print("\nSample Data:")
     #df.show(1, truncate=False)
 
-
 def test_parsing_fhir_condition(s3_tables_context):
 
     s3_condition_path_local = "tests/condition/"
@@ -184,7 +183,6 @@ def test_parsing_fhir_condition(s3_tables_context):
     #df = df.select("id", "code", explode(col("code")).alias("code_exploded"))
     df = parse_fhir_condition(df)
     df.show(10, truncate=False)
-
 
 def test_parsing_fhir_observation(glue_context):
     spark = glue_context.spark_session
@@ -276,8 +274,6 @@ def test_parsing_fhir_encounter(glue_context):
 
     df.show(10, truncate=False)
     df.printSchema()
-
-
 
 def test_parsing_fhir_medication_code_first_element(s3_tables_context):
     s3_medication_path_local = "tests/medication/"
