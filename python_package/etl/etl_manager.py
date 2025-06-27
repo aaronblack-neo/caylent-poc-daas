@@ -1,15 +1,9 @@
-import boto3
-from pyspark.sql.functions import regexp_extract, input_file_name
-from pyspark.sql.functions import to_date
-
-from etl.config import raw_s3_tables_schemas
+from etl.etl_helper import write_to_table
 
 prefix = "organized_by_table"
 
-
 class EtlManager:
     def __init__(self, glue_context, landing_bucket_name, datalake_bucket_name):
-        #self.glue_client = boto3.client("glue", region_name="us-east-1")
         self.glue_context = glue_context
         self.spark = glue_context
         self.logger = glue_context.get_logger()
@@ -34,16 +28,6 @@ class EtlManager:
             .load(s3_input_path)
         )
 
-        df.writeTo(f"raw.{table}") \
-            .tableProperty("format-version", "2") \
-            .createOrReplace()
+        write_to_table(df, "raw", table)
 
         return df
-
-    def table_exists_in_glue_catalog(self, database_name, table_name):
-        try:
-            result = self.spark.sql(f"SHOW TABLES IN {database_name}").filter(f"tableName = '{table_name}'").count()
-            return result > 0
-        except Exception as e:
-            self.logger.error(f"Error checking table existence: {e}")
-            return False

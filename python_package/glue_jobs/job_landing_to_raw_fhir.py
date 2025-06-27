@@ -6,6 +6,7 @@ from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark import SparkContext
 
+from etl.etl_helper import write_to_table
 
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
@@ -40,9 +41,8 @@ for folder in folders:
               .json(s3_input_path))
 
         table_name = folder.lower()
-        df.writeTo(f"raw.{table_name}") \
-            .tableProperty("format-version", "2") \
-            .createOrReplace()
+
+        write_to_table(df, "raw", table_name)
 
     except:
         logger.error(f"Error processing folder {folder}. Skipping to next folder.")
