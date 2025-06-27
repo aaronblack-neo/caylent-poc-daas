@@ -14,14 +14,14 @@ resource "aws_sfn_state_machine" "etl_orchestration" {
             StartAt = "ProcessCSVLandingToRaw"
             States = {
               "ProcessCSVLandingToRaw" = {
-                Type       = "Task"
-                Resource   = "arn:aws:states:::glue:startJobRun.sync"
+                Type     = "Task"
+                Resource = "arn:aws:states:::glue:startJobRun.sync"
                 Parameters = {
                   JobName = "caylent-poc-etl-landing-to-raw-csv"
                   Arguments = {
-                    "--landing_bucket_name"    = "neogenomics-caylent-shared-data-daas"
-                    "--datalake_bucket_name"   = "caylent-poc-datalake"
-                    "--raw_namespace"          = "raw"
+                    "--landing_bucket_name"  = "neogenomics-caylent-shared-data-daas"
+                    "--datalake_bucket_name" = "caylent-poc-datalake"
+                    "--raw_namespace"        = "raw"
                   }
                 }
                 End = true
@@ -32,8 +32,8 @@ resource "aws_sfn_state_machine" "etl_orchestration" {
             StartAt = "ProcessFHIRLandingToRaw"
             States = {
               "ProcessFHIRLandingToRaw" = {
-                Type       = "Task"
-                Resource   = "arn:aws:states:::glue:startJobRun.sync"
+                Type     = "Task"
+                Resource = "arn:aws:states:::glue:startJobRun.sync"
                 Parameters = {
                   JobName = "caylent-poc-etl-landing-to-raw-fhir"
                 }
@@ -51,12 +51,12 @@ resource "aws_sfn_state_machine" "etl_orchestration" {
             StartAt = "ProcessCSVRawToStage"
             States = {
               "ProcessCSVRawToStage" = {
-                Type       = "Task"
-                Resource   = "arn:aws:states:::glue:startJobRun.sync"
+                Type     = "Task"
+                Resource = "arn:aws:states:::glue:startJobRun.sync"
                 Parameters = {
                   JobName = "caylent-poc-etl-raw-to-stage-csv"
                   Arguments = {
-                    "--namespace"          = "stage"
+                    "--namespace" = "stage"
                   }
                 }
                 End = true
@@ -67,12 +67,12 @@ resource "aws_sfn_state_machine" "etl_orchestration" {
             StartAt = "ProcessFHIRRawToStage"
             States = {
               "ProcessFHIRRawToStage" = {
-                Type       = "Task"
-                Resource   = "arn:aws:states:::glue:startJobRun.sync"
+                Type     = "Task"
+                Resource = "arn:aws:states:::glue:startJobRun.sync"
                 Parameters = {
                   JobName = "caylent-poc-etl-raw-to-stage-fhir"
                   Arguments = {
-                    "--namespace"          = "stage"
+                    "--namespace" = "stage"
                   }
                 }
                 End = true

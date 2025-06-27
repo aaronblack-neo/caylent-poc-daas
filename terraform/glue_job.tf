@@ -1,8 +1,8 @@
 locals {
-  raw_job_name = "job_landing_to_raw_csv.py"
-  fhir_job_name = "job_landing_to_raw_fhir.py"
+  raw_job_name        = "job_landing_to_raw_csv.py"
+  fhir_job_name       = "job_landing_to_raw_fhir.py"
   fhir_stage_job_name = "job_raw_to_stage_fhir.py"
-  csv_stage_job_name = "job_raw_to_stage_csv.py"
+  csv_stage_job_name  = "job_raw_to_stage_csv.py"
 
   iceberg_spark_conf = <<EOT
  conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
@@ -88,7 +88,7 @@ resource "aws_glue_job" "fhir_job" {
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
     "--landing_bucket_name"              = local.client_landing_bucket
-    "--raw_namespace"                  = "raw"
+    "--raw_namespace"                    = "raw"
   }
 
   glue_version      = "5.0"
@@ -131,7 +131,7 @@ resource "aws_glue_job" "fhir_stage_job" {
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
     "--landing_bucket_name"              = local.client_landing_bucket
-    "--namespace"                  = "stage"
+    "--namespace"                        = "stage"
   }
 
   glue_version      = "5.0"
