@@ -84,7 +84,7 @@ resource "aws_glue_job" "fhir_job" {
     "--enable-observability-metrics"     = "true"
     "--enable-continuous-cloudwatch-log" = "true"
     "--enable-spark-ui"                  = "true"
-    #"--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
+    "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
     "--landing_bucket_name"              = local.client_landing_bucket
