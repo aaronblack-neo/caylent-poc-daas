@@ -55,6 +55,9 @@ resource "aws_sfn_state_machine" "etl_orchestration" {
                 Resource   = "arn:aws:states:::glue:startJobRun.sync"
                 Parameters = {
                   JobName = "caylent-poc-etl-raw-to-stage-csv"
+                  Arguments = {
+                    "--namespace"          = "stage"
+                  }
                 }
                 End = true
               }
@@ -68,6 +71,9 @@ resource "aws_sfn_state_machine" "etl_orchestration" {
                 Resource   = "arn:aws:states:::glue:startJobRun.sync"
                 Parameters = {
                   JobName = "caylent-poc-etl-raw-to-stage-fhir"
+                  Arguments = {
+                    "--namespace"          = "stage"
+                  }
                 }
                 End = true
               }
