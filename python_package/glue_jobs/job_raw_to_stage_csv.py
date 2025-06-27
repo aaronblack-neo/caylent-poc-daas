@@ -6,7 +6,7 @@ from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark import SparkContext
 
-from etl.config import raw_s3_tables_schemas
+from etl.config import csv_tables
 from etl.etl_helper import write_to_table
 
 # Define the arguments we want to be able to pass to the job
@@ -26,7 +26,7 @@ logger = glueContext.get_logger()
 namespace = args["namespace"]
 
 # List of CSV tables to process
-csv_tables = raw_s3_tables_schemas.keys()
+csv_tables = csv_tables.keys()
 
 for table_name in csv_tables:
     logger.info(f"Processing table: {table_name}")
