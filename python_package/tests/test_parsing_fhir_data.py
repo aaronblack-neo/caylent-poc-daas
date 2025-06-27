@@ -503,7 +503,7 @@ def test_parsin_fhir_medicationstatement(s3_tables_context):
 def test_writing_medicationstatement_data(glue_context):
     spark = glue_context.spark_session
 
-    path = "tests/medstacsv/"
+    path = "tests/medstacsv/MedicationStatment.csv"
     table_name = "medicationstatement"
     # read csv
     df = (
