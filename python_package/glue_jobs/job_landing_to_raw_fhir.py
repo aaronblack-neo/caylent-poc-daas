@@ -36,8 +36,8 @@ folders = [
     "Encounter",
     "Procedure",
     "Location",
-    "PractitionerRole",
-    # "MedicationStatement"
+    "PractitionerRole"
+    #, "MedicationStatement"
 ]
 
 for folder in folders:

@@ -28,8 +28,9 @@ csv_tables = {
     },
     "patient_match_hub": {
         "delimiter": ","
-    },
-    "new_table": {
-        "delimiter": "|"
     }
+    # Uncomment and add new tables as needed,
+    # "new_table": {
+    #     "delimiter": "|"
+    # }
 }
