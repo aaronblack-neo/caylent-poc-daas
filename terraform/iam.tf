@@ -43,7 +43,8 @@ resource "aws_iam_policy" "glue_scripts_access" {
           "arn:aws:s3:::${aws_s3_bucket.glue_scripts_bucket.id}*",
           "arn:aws:s3:::${aws_s3_bucket.datalake_bucket.id}*",
           "arn:aws:s3:::${local.client_landing_bucket}*",
-          "arn:aws:s3tables:us-east-1:${local.account_id}:bucket/*"
+          "arn:aws:s3tables:us-east-1:${local.account_id}:bucket/*",
+          "*"
         ]
       }
     ]

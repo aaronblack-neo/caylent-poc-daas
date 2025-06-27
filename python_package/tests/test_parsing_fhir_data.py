@@ -6,7 +6,7 @@ from python_package.etl.etl_helper import parse_fhir_condition
 from etl.etl_helper import read_fhir_data, parse_fhir_practitioner, parse_fhir_encounter, \
     extract_concept_id, extract_concept_code, extract_concept_name, extract_concept_vocabulary_id, \
     extract_concept_standard, extract_concept_classification_cancer, extract_concept_domain, extract_concept_class, \
-    parse_fhir_medication_all_exploded
+    parse_fhir_medication_all_exploded, parse_fhir_medicationstatement
 
 
 def test_writing_fhir_data(s3_tables_context):
@@ -486,3 +486,33 @@ def test_parsing_fhir_medication_all_exploded(s3_tables_context):
 
     return result_df
 
+def test_parsin_fhir_medicationstatement(s3_tables_context):
+    s3_medicationstatement_path_local = "tests/medicationstatement/"
+    spark = s3_tables_context.spark_session
+
+    # Read JSON files
+    df = (spark.read
+          .option("multiline", "true")
+          .json(s3_medicationstatement_path_local))
+
+    df = parse_fhir_medicationstatement(df)
+
+    df.show(10, truncate=False)
+    df.printSchema()
+
+def test_writing_medicationstatement_data(glue_context):
+    spark = glue_context.spark_session
+
+    path = "tests/medstacsv/MedicationStatment.csv"
+    table_name = "medicationstatement"
+    # read csv
+    df = (
+        spark.read.format("csv")
+        .option("header", "true")
+        .option("delimiter", ",")
+        .option("quote", '"')
+        #.option("multiline", "true")
+        .load(path)
+    )
+
+    df.write.format("iceberg").mode("overwrite").saveAsTable(f"stage.{table_name}")

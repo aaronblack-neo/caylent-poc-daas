@@ -1,4 +1,4 @@
-from pyspark.sql.functions import col, explode, lit, when, udf
+from pyspark.sql.functions import col, explode, lit, when, udf, explode_outer
 from pyspark.sql.types import ArrayType, StringType, IntegerType, BooleanType
 
 
@@ -6,6 +6,8 @@ def read_fhir_data(s3_condition_path_local, spark):
     df = spark.read.option("multiline", "true").option("inferSchema", "true").json(s3_condition_path_local)
     return df
 
+def write_to_table(df, namespace, table_name):
+    df.writeTo(f"{namespace}.{table_name}").tableProperty("format-version", "2").createOrReplace()
 
 def parse_fhir_condition(df):
     df = df.select(
@@ -16,7 +18,6 @@ def parse_fhir_condition(df):
         col("subject.reference").alias("subject_reference"),
     )
     return df
-
 
 def parse_fhir_observation(df):
     df = df.select(
@@ -40,7 +41,6 @@ def parse_fhir_observation(df):
         col("valueString").alias("valueString"),
     )
     return df
-
 
 def parse_fhir_medication(df):
 
@@ -124,7 +124,6 @@ def parse_fhir_medication(df):
     )
     return df_flat
 
-
 def parse_fhir_procedure(df):
     df.select(
         "id",
@@ -138,14 +137,12 @@ def parse_fhir_procedure(df):
     )
     return df
 
-
 def parse_fhir_patient(df):
     df = df.select(
         "id",
         col("gender").alias("gender"),
     )
     return df
-
 
 def parse_fhir_practitioner(df):
     df = df.select(
@@ -164,7 +161,6 @@ def parse_fhir_practitioner(df):
         col("telecom.value").alias("phone_number"),
     )
     return df
-
 
 def parse_fhir_encounter(df):
     df = df.select(
@@ -186,7 +182,6 @@ def parse_fhir_encounter(df):
         col("type.text").alias("type_text"),
     )
     return df
-
 
 def parse_fhir_medication_all_exploded(df):
     # Part 1: Explode the code.coding array
@@ -234,13 +229,62 @@ def parse_fhir_medication_all_exploded(df):
     result_df = coding_result_df.union(ingredient_result_df)
     return result_df
 
-
 def parse_fhir_medicationstatement(df):
-    pass
-    # return df
+    """
+    Parse FHIR MedicationStatement resources and extract normalized concepts.
 
-def write_to_table(df, namespace, table_name):
-    df.writeTo(f"{namespace}.{table_name}").tableProperty("format-version", "2").createOrReplace()
+    Args:
+        df: DataFrame containing MedicationStatement resources
+
+    Returns:
+        DataFrame with exploded concept data from reasonCode.coding
+    """
+    # First filter to include only records that have reasonCode
+    df_with_reasons = df.filter(col("reasonCode").isNotNull())
+
+    # Skip processing if no records with reasonCode
+    if df_with_reasons.count() == 0:
+        return df_with_reasons.select(
+            "id",
+            lit("reasonCode").alias("source_type"),
+            lit(None).alias("reason_text"),
+            lit(None).alias("coding_display"),
+            lit(None).alias("concept_id")
+        ).limit(0)  # Empty dataframe with expected schema
+
+    # Extract the reasonCode array and explode it
+    exploded_reason_df = df_with_reasons.select(
+        "id",
+        explode_outer(col("reasonCode")).alias("reason_item")
+    )
+
+    # Explode the coding array for each reasonCode
+    exploded_coding_df = exploded_reason_df.select(
+        "id",
+        explode_outer(col("reason_item.coding")).alias("coding_item"),
+        col("reason_item.text").alias("reason_text")
+    )
+
+    # Extract normalized concept data from each coding
+    result_df = exploded_coding_df.select(
+        col("id"),
+        lit("reasonCode").alias("source_type"),
+        col("reason_text"),
+        col("coding_item.display").alias("coding_display"),
+        # Extract concept information from extensions
+        extract_concept_id(col("coding_item.extension")).alias("concept_id"),
+        extract_concept_code(col("coding_item.extension")).alias("concept_code"),
+        extract_concept_name(col("coding_item.extension")).alias("concept_name"),
+        extract_concept_vocabulary_id(col("coding_item.extension")).alias("concept_vocabulary_id"),
+        extract_concept_standard(col("coding_item.extension")).alias("concept_standard"),
+        extract_concept_classification_cancer(col("coding_item.extension")).alias("concept_cancer"),
+        extract_concept_domain(col("coding_item.extension")).alias("concept_domain"),
+        extract_concept_class(col("coding_item.extension")).alias("concept_class")
+    )
+
+    return result_df
+
+
 
 
 # Define UDFs for all normalized concept fields
