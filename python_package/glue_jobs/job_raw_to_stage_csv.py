@@ -12,10 +12,7 @@ from etl.etl_helper import write_to_table
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
     sys.argv,
-    [
-        "JOB_NAME",
-        "namespace"
-    ],
+    ["JOB_NAME", "namespace"],
 )
 
 sc = SparkContext()

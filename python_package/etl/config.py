@@ -1,4 +1,3 @@
-
 landing_bucket_name = "neogenomics-caylent-shared-data-daas"
 landing_bucket_filepath = "neogenomics-caylent-shared-data-daas/organized_by_table"
 datalake_bucket_name = "caylent-poc-datalake"
@@ -27,7 +26,7 @@ raw_s3_tables_schemas = {
                   case_interpretation string,
                   case_test_names string
             )
-        """
+        """,
     },
     "accession_data": {
         "delimiter": "|",
@@ -42,7 +41,7 @@ raw_s3_tables_schemas = {
                 disease_status_name string,
                 patient_age_at_time_of_service string
             )
-        """
+        """,
     },
     "client_data": {
         "delimiter": "|",
@@ -60,7 +59,7 @@ raw_s3_tables_schemas = {
                 client_specialty string,
                 client_setting string
             )
-        """
+        """,
     },
     "doctor_data": {
         "delimiter": "|",
@@ -77,7 +76,7 @@ raw_s3_tables_schemas = {
                 practice_location_country string,
                 practice_location_country_code string
             )
-        """
+        """,
     },
     "image_data": {
         "delimiter": "|",
@@ -115,7 +114,7 @@ raw_s3_tables_schemas = {
                 image_width string,
                 mpp string
             )
-        """
+        """,
     },
     "orders_fact_data": {
         "delimiter": "|",
@@ -160,7 +159,7 @@ raw_s3_tables_schemas = {
                 case_first_signed_timestamp string,
                 test_info_exists string
             )
-        """
+        """,
     },
     "patient_data": {
         "delimiter": "|",
@@ -173,7 +172,7 @@ raw_s3_tables_schemas = {
                 patient_state string,
                 patient_postal_code string
             )
-        """
+        """,
     },
     "patient_match_hub": {
         "delimiter": ",",
@@ -183,6 +182,6 @@ raw_s3_tables_schemas = {
                 resourceType string,
                 patient_hub_id string
             )
-        """
-    }
+        """,
+    },
 }

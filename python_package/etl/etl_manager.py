@@ -2,6 +2,7 @@ from etl.etl_helper import write_to_table
 
 prefix = "organized_by_table"
 
+
 class EtlManager:
     def __init__(self, glue_context, landing_bucket_name, datalake_bucket_name):
         self.glue_context = glue_context

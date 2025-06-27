@@ -10,10 +10,7 @@ from etl.etl_helper import write_to_table, parse_fhir_medication_all_exploded
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
     sys.argv,
-    [
-        "JOB_NAME",
-        "namespace"
-    ],
+    ["JOB_NAME", "namespace"],
 )
 
 sc = SparkContext()
@@ -33,7 +30,6 @@ tables = ["medication"]
 
 for table_name in tables:
     df = spark.sql(f"SELECT * FROM raw.{table_name}")
-
 
     # make a switch case for each folder
     match table_name:

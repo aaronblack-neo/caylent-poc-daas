@@ -26,7 +26,17 @@ logger = glueContext.get_logger()
 
 base_s3_input_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share"
 
-folders = ["Medication", "Patient", "Condition", "Observation", "Practitioner", "Encounter", "Procedure", "Location", "PractitionerRole"]
+folders = [
+    "Medication",
+    "Patient",
+    "Condition",
+    "Observation",
+    "Practitioner",
+    "Encounter",
+    "Procedure",
+    "Location",
+    "PractitionerRole",
+]
 
 for folder in folders:
     s3_input_path = f"s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share/{folder}"
@@ -34,10 +44,7 @@ for folder in folders:
 
     try:
         # Read JSON files
-        df = (spark.read
-              .option("multiline", "true")
-              .option("inferSchema", "true")
-              .json(s3_input_path))
+        df = spark.read.option("multiline", "true").option("inferSchema", "true").json(s3_input_path)
 
         table_name = folder.lower()
 
