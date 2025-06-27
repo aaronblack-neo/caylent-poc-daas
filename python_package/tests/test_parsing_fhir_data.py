@@ -500,3 +500,19 @@ def test_parsin_fhir_medicationstatement(s3_tables_context):
     df.show(10, truncate=False)
     df.printSchema()
 
+def test_writing_medicationstatement_data(glue_context):
+    spark = glue_context.spark_session
+
+    path = "tests/medstacsv/"
+    table_name = "medicationstatement"
+    # read csv
+    df = (
+        spark.read.format("csv")
+        .option("header", "true")
+        .option("delimiter", ",")
+        .option("quote", '"')
+        #.option("multiline", "true")
+        .load(path)
+    )
+
+    df.write.format("iceberg").mode("overwrite").saveAsTable(f"stage.{table_name}")

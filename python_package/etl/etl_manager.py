@@ -25,7 +25,7 @@ class EtlManager:
             .option("header", "true")
             .option("delimiter", delimiter)
             .option("quote", '"')
-            .option("multiline", "true")
+            #.option("multiline", "true")
             .load(s3_input_path)
         )
 
