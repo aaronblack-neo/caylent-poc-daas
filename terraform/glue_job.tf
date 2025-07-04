@@ -1,9 +1,13 @@
 locals {
-  raw_job_name        = "job_landing_to_raw_csv.py"
-  fhir_job_name       = "job_landing_to_raw_fhir.py"
-  fhir_stage_job_name = "job_raw_to_stage_fhir.py"
-  csv_stage_job_name  = "job_raw_to_stage_csv.py"
-  comprehend_job_name = "job_comprehend.py"
+  raw_job_name                = "job_landing_to_raw_csv.py"
+  fhir_job_name               = "job_landing_to_raw_fhir.py"
+  fhir_stage_job_name         = "job_raw_to_stage_fhir.py"
+  csv_stage_job_name          = "job_raw_to_stage_csv.py"
+  comprehend_job_name         = "job_comprehend.py"
+  bucket_name                 = "caylent-poc-medical-comprehend"
+  input_s3_path               = "s3://${local.bucket_name}/example/input/"
+  output_s3_txt_path          = "s3://${local.bucket_name}/example/output/"
+  output_s3_comprehend_path   = "s3://${local.bucket_name}/example/results/"
 
   iceberg_spark_conf = <<EOT
  conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
@@ -217,7 +221,10 @@ resource "aws_glue_job" "comprehend_job" {
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
     "--namespace"                        = "stage"
-  }
+    "--input_s3_path"                    = local.input_s3_path
+    "--output_s3_txt_path"               = local.output_s3_txt_path
+    "--output_s3_comprehend_path"        = local.output_s3_comprehend_path
+      }
 
   glue_version      = "5.0"
   worker_type       = "G.1X"

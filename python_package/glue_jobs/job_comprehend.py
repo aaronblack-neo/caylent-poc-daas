@@ -4,7 +4,16 @@ import pandas as pd
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
+from pyspark.sql.functions import monotonically_increasing_id
 import io
+import openpyxl
+
+# Inputs
+
+format = "iceberg"
+catalog_name = "glue_catalog"
+database_name = "stage"
+iceberg_s3_path = "s3://caylent-poc-datalake/datalake/"
 
 # Initialize Glue job
 sc = SparkContext()
@@ -13,13 +22,21 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init('medical_comprehend')
 
-# Hardcoded S3 paths
-input_s3_path = 's3://caylent-poc-medical-comprehand/example/input/'
-output_s3_txt_path = 's3://caylent-poc-medical-comprehand/example/output/'
-output_s3_comprehend_path = 's3://caylent-poc-medical-comprehand/example/results/'
+spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
+spark.conf.set("spark.sql.defaultCatalog", "glue_catalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", iceberg_s3_path)
 
-# Step 1: Read the CSV file(s) from S3 and write each row as a text file
+# Hardcoded S3 paths
+input_s3_path = 's3://caylent-poc-medical-comprehend/example/input/'
+output_s3_txt_path = 's3://caylent-poc-medical-comprehend/example/output/'
+output_s3_comprehend_path = 's3://caylent-poc-medical-comprehend/example/results/'
+
+# Step 1: Read the CSV file(s) from S3 and add row number column
 df = spark.read.format('csv').option('header', 'true').load(input_s3_path)
+# Add _row_number column (starting from 1)
+df = df.withColumn('_row_number', monotonically_increasing_id() + 1)
 
 # Convert DataFrame to RDD and assign row numbers
 rdd_with_index = df.rdd.zipWithIndex().map(lambda x: (x[0], x[1] + 1))  # Row number starts from 1
@@ -116,7 +133,7 @@ for obj in response.get('Contents', []):
         rxnorm_concepts = []
 
         # Load CSV row as CaseMetadata
-        csv_row = df.filter(df['_row_number'] == row_number).collect()
+        csv_row = df.filter(df['_row_number'] == int(row_number)).collect()
         if not csv_row:
             print(f"No CSV row found for row_number {row_number}. Skipping Excel generation.")
             continue
@@ -209,7 +226,7 @@ for obj in response.get('Contents', []):
         df_rxnorm_concepts = pd.DataFrame(rxnorm_concepts)
 
         # Write to Excel in the row-specific subfolder
-        excel_file_key = f"{irmerow_subfolder}combined_medical_data.xlsx"
+        excel_file_key = f"{row_subfolder}combined_medical_data.xlsx"
         excel_path = f"{output_s3_comprehend_path}{excel_file_key}"
         with io.BytesIO() as output:
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -223,7 +240,27 @@ for obj in response.get('Contents', []):
             s3.put_object(Bucket=output_s3_comprehend_path.replace('s3://', '').split('/')[0],
                           Key='/'.join(excel_path.replace('s3://', '').split('/')[1:]),
                           Body=output.getvalue())
-
+            
+            # Write as iceberg table
+            
+            iceberg_tables = {
+                'entities': df_entities,
+                'traits': df_traits,
+                'attributes': df_attributes,
+                'icd_concepts': df_icd_concepts,
+                'snomed_concepts': df_snomed_concepts,
+                'rxnorm_concepts': df_rxnorm_concepts
+                }
+                
+            for table_name, df in iceberg_tables.items():
+                if not df.empty:
+                    for column in df_case_metadata.columns:
+                        df[column] = df_case_metadata[column].loc[0]
+    
+                    iceberg_full_table = catalog_name + "." + database_name + "." + table_name
+                    spark_df = spark.createDataFrame(df)
+                    spark_df.writeTo(iceberg_full_table).using(format).createOrReplace()
+            
 print(f'Comprehend Medical results and combined Excel files have been written to row-specific subfolders in "{output_s3_comprehend_path}".')
 
 # Commit the Glue job
