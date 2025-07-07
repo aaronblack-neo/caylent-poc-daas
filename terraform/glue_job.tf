@@ -5,9 +5,9 @@ locals {
   csv_stage_job_name          = "job_raw_to_stage_csv.py"
   comprehend_job_name         = "job_comprehend.py"
   bucket_name                 = "caylent-poc-medical-comprehend"
-  input_s3_path               = "s3://${local.bucket_name}/example/input/"
-  output_s3_txt_path          = "s3://${local.bucket_name}/example/output/"
-  output_s3_comprehend_path   = "s3://${local.bucket_name}/example/results/"
+  input_s3_path               = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/input/"
+  output_s3_txt_path          = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/output/"
+  output_s3_comprehend_path   = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/results/"
 
   iceberg_spark_conf = <<EOT
  conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
@@ -224,6 +224,7 @@ resource "aws_glue_job" "comprehend_job" {
     "--input_s3_path"                    = local.input_s3_path
     "--output_s3_txt_path"               = local.output_s3_txt_path
     "--output_s3_comprehend_path"        = local.output_s3_comprehend_path
+    "--additional-python-modules"        = "openpyxl==3.1.2"
       }
 
   glue_version      = "5.0"

@@ -14,9 +14,9 @@ resource "aws_s3_bucket" "athena_query_results_bucket" {
   bucket = "caylent-poc-athena-query-results"
 }
 
-# Comprehend output bucket
-resource "aws_s3_bucket" "comprehend_output_bucket" {
-  bucket = "caylent-poc-comprehend-output-bucket"
+# Comprehend bucket
+resource "aws_s3_bucket" "comprehend_bucket" {
+  bucket = "caylent-poc-comprehend-bucket"
 }
 
 # create folders in raw bucket

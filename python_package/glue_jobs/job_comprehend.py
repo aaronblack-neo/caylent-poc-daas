@@ -1,12 +1,17 @@
 import boto3
 import json
+import sys
 import pandas as pd
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.job import Job
-from pyspark.sql.functions import monotonically_increasing_id
 import io
 import openpyxl
+
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.utils import getResolvedOptions
+from awsglue.job import Job
+from pyspark.sql.functions import monotonically_increasing_id
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+
 
 # Inputs
 
@@ -21,6 +26,7 @@ glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 job = Job(glueContext)
 job.init('medical_comprehend')
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'input_s3_path', 'output_s3_txt_path', 'output_s3_comprehend_path'])
 
 spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
 spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
@@ -29,9 +35,9 @@ spark.conf.set("spark.sql.defaultCatalog", "glue_catalog")
 spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", iceberg_s3_path)
 
 # Hardcoded S3 paths
-input_s3_path = 's3://caylent-poc-medical-comprehend/example/input/'
-output_s3_txt_path = 's3://caylent-poc-medical-comprehend/example/output/'
-output_s3_comprehend_path = 's3://caylent-poc-medical-comprehend/example/results/'
+input_s3_path = args['input_s3_path']
+output_s3_txt_path = args['output_s3_txt_path']
+output_s3_comprehend_path = args['output_s3_comprehend_path']
 
 # Step 1: Read the CSV file(s) from S3 and add row number column
 df = spark.read.format('csv').option('header', 'true').load(input_s3_path)
@@ -117,6 +123,8 @@ for obj in response.get('Contents', []):
                 print(f"Error processing {file_key} with {config['api']}: {str(e)}")
 
 # Step 4: Parse JSON outputs and combine into Excel file
+
+
 for obj in response.get('Contents', []):
     file_key = obj['Key']
     if file_key.endswith('.txt'):
@@ -252,15 +260,23 @@ for obj in response.get('Contents', []):
                 'rxnorm_concepts': df_rxnorm_concepts
                 }
                 
-            for table_name, df in iceberg_tables.items():
-                if not df.empty:
+            for table_name, df_iceberg in iceberg_tables.items():
+                if not df_iceberg.empty:
                     for column in df_case_metadata.columns:
-                        df[column] = df_case_metadata[column].loc[0]
-    
-                    iceberg_full_table = catalog_name + "." + database_name + "." + table_name
-                    spark_df = spark.createDataFrame(df)
-                    spark_df.writeTo(iceberg_full_table).using(format).createOrReplace()
-            
+                        print(f'column: {column}, df_case_metadata[column].loc[0]: {df_case_metadata[column].loc[0]}')
+                        df_iceberg[column] = df_case_metadata[column].loc[0]
+
+                    iceberg_full_table = catalog_name + "." + database_name + "." + "comprehend_" + table_name
+                    schema = StructType([StructField(column, StringType(), True) for column in df.columns])
+                    spark_df = spark.createDataFrame(df_iceberg, schema = schema)
+                    table_exists = spark.catalog.tableExists(iceberg_full_table)
+
+                    if spark.catalog.tableExists(iceberg_full_table):
+                        spark_df.writeTo(iceberg_full_table).using(format).append()
+
+                    else:
+                        spark_df.writeTo(iceberg_full_table).using(format).createOrReplace()
+
 print(f'Comprehend Medical results and combined Excel files have been written to row-specific subfolders in "{output_s3_comprehend_path}".')
 
 # Commit the Glue job
