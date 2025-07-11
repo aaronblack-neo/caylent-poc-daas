@@ -48,7 +48,7 @@ from awsglue.utils import getResolvedOptions
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, udf, when, lit, regexp_replace, trim, explode, lower,
-    map_keys as spark_map_keys, get_json_object
+    map_keys as spark_map_keys, get_json_object, regexp_extract
 )
 from pyspark.sql.types import StringType, MapType
 from typing import Dict, Any
@@ -982,6 +982,10 @@ def process_medication_statements_glue(input_s3_path, output_s3_path):
         spark = glueContext.spark_session
 
         # Set Spark SQL configs (safe for Glue)
+        spark.conf.set("spark.sql.adaptive.enabled", "true")
+        spark.conf.set("spark.sql.adaptive.coalescePartitions.enabled", "true")
+        spark.conf.set("spark.sql.adaptive.skewJoin.enabled", "true")
+        spark.conf.set("spark.sql.adaptive.localShuffleReader.enabled", "true")
         iceberg_s3_path = "s3://caylent-poc-datalake/datalake/"
 
         spark.conf.set("spark.sql.adaptive.enabled", "true")
@@ -993,7 +997,7 @@ def process_medication_statements_glue(input_s3_path, output_s3_path):
         spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
         spark.conf.set("spark.sql.defaultCatalog", "glue_catalog")
         spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", iceberg_s3_path)
-
+        
         logger.info(f"Reading CSV file from S3: {input_s3_path}")
         df = spark.read.option("header", "true") \
                       .option("inferSchema", "true") \
@@ -1020,6 +1024,36 @@ def process_medication_statements_glue(input_s3_path, output_s3_path):
             if norm_col in result_df.columns:
                 result_df = result_df.withColumn(col_name, col(norm_col))
 
+        # If medicationreference_reference exists, extract the hash and rename to medicationid
+        if 'medicationreference_reference' in result_df.columns:
+            # Extract the part after 'Medication/'
+            result_df = result_df.withColumn(
+                'medicationid',
+                regexp_extract(col('medicationreference_reference'), r'^Medication/(.+)$', 1)
+            )
+            # Drop the original column
+            result_df = result_df.drop('medicationreference_reference')
+
+        # If subject_reference exists, extract the hash and rename to patientid
+        if 'subject_reference' in result_df.columns:
+            # Extract the part after 'Patient/'
+            result_df = result_df.withColumn(
+                'patientid',
+                regexp_extract(col('subject_reference'), r'^Patient/(.+)$', 1)
+            )
+            # Drop the original column
+            result_df = result_df.drop('subject_reference')
+
+        # If informationsource_reference exists, extract the hash and rename to practitionerid
+        if 'informationsource_reference' in result_df.columns:
+            # Extract the part after 'PractitionerRole/'
+            result_df = result_df.withColumn(
+                'practitionerid',
+                regexp_extract(col('informationsource_reference'), r'^PractitionerRole/(.+)$', 1)
+            )
+            # Drop the original column
+            result_df = result_df.drop('informationsource_reference')
+
         # Consistently convert all empty strings, None, or 'null' (string) to null (None in Spark)
         for c in result_df.columns:
             result_df = result_df.withColumn(
@@ -1032,17 +1066,18 @@ def process_medication_statements_glue(input_s3_path, output_s3_path):
         result_df = result_df.toDF(*lower_cols)
 
         logger.info(f"Writing flattened data to S3: {output_s3_path}")
+        
         format = "iceberg"
         catalog_name = "glue_catalog"
         database_name = "stage"
-        table_name = "medication_statement_terraform"
+        table_name = "medication_statement_v2"
         iceberg_full_table = catalog_name + "." + database_name + "." + table_name
 
         if spark.catalog.tableExists(iceberg_full_table):
             result_df.writeTo(iceberg_full_table).using(format).append()
     
         else:
-            result_df.writeTo(iceberg_full_table).using(format).createOrReplace()        
+            result_df.writeTo(iceberg_full_table).using(format).createOrReplace()   
         
         result_df.coalesce(1).write.mode('overwrite').option('header', 'true').csv(output_s3_path)
         logger.info("Processing complete!")
@@ -1056,4 +1091,3 @@ if __name__ == "__main__":
     input_s3_path = args['INPUT_S3_PATH']
     output_s3_path = args['OUTPUT_S3_PATH']
     process_medication_statements_glue(input_s3_path, output_s3_path)
-    
