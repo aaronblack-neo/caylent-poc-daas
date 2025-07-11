@@ -4,10 +4,13 @@ locals {
   fhir_stage_job_name         = "job_raw_to_stage_fhir.py"
   csv_stage_job_name          = "job_raw_to_stage_csv.py"
   comprehend_job_name         = "job_comprehend.py"
+  medication_statement        = "patient_statements_etl.py"
   bucket_name                 = "caylent-poc-medical-comprehend"
   input_s3_path               = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/input/"
   output_s3_txt_path          = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/output/"
   output_s3_comprehend_path   = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/results/"
+  INPUT_S3_PATH               = "s3://${aws_s3_bucket.medication_statement_bucket.id}/medication-statement/patient_statements_new.csv"
+  OUTPUT_S3_PATH              = "s3://${aws_s3_bucket.medication_statement_bucket.id}/patientstatement_output"
 
   iceberg_spark_conf = <<EOT
  conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
@@ -225,6 +228,50 @@ resource "aws_glue_job" "comprehend_job" {
     "--output_s3_txt_path"               = local.output_s3_txt_path
     "--output_s3_comprehend_path"        = local.output_s3_comprehend_path
     "--additional-python-modules"        = "openpyxl==3.1.2"
+      }
+
+  glue_version      = "5.0"
+  worker_type       = "G.1X"
+  number_of_workers = "2"
+
+  execution_property {
+    max_concurrent_runs = 10
+  }
+}
+
+# Medication statement glue job
+
+resource "aws_s3_object" "medication_statement_job_script" {
+  bucket = aws_s3_bucket.glue_scripts_bucket.id
+  key    = "glue_jobs/${local.medication_statement}"
+  source = "../python_package/glue_jobs/${local.medication_statement}"
+  etag   = filemd5("../python_package/glue_jobs/${local.medication_statement}")
+}
+
+resource "aws_glue_job" "medication_statement_job" {
+  name     = "patient_statements_etl"
+  role_arn = aws_iam_role.glue_etl_role.arn
+
+  command {
+    script_location = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/${aws_s3_object.medication_statement_job_script.key}"
+    python_version  = "3"
+  }
+
+  default_arguments = {
+    "--job-language"                     = "python"
+    "--job-bookmark-option"              = "job-bookmark-disable"
+    "--enable-glue-datacatalog"          = "true"
+    "--enable-metrics"                   = "true"
+    "--enable-job-insights"              = "true"
+    "--enable-observability-metrics"     = "true"
+    "--enable-continuous-cloudwatch-log" = "true"
+    "--enable-spark-ui"                  = "true"
+    "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
+    "--conf"                             = trim(local.iceberg_spark_conf, "\n")
+    "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
+    "--namespace"                        = "stage"
+    "--INPUT_S3_PATH"                    = local.INPUT_S3_PATH
+    "--OUTPUT_S3_PATH"                   = local.OUTPUT_S3_PATH
       }
 
   glue_version      = "5.0"
