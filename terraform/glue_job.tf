@@ -9,7 +9,7 @@ locals {
   input_s3_path               = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/input/"
   output_s3_txt_path          = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/output/"
   output_s3_comprehend_path   = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/results/"
-  INPUT_S3_PATH               = "s3://${aws_s3_bucket.medication_statement_bucket.id}/medication-statement/patient_statements_new.csv"
+  INPUT_S3_PATH               = "s3://${aws_s3_bucket.medication_statement_bucket.id}/medication-statement/"
   OUTPUT_S3_PATH              = "s3://${aws_s3_bucket.medication_statement_bucket.id}/patientstatement_output"
 
   iceberg_spark_conf = <<EOT
