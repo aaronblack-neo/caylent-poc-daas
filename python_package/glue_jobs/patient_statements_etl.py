@@ -14,6 +14,7 @@ This script now includes specialized healthcare data transformations:
    - 'urn:xcures:documentId' with 'valueString' → 'documentId' column
    - Creates meaningful column names from healthcare URNs
 
+   
 3. Reference Parsing:
    - 'reference=Medication/3f41c459-eb22-5f12-afc7-771ea2230989'
    - → 'Medication' column with value '3f41c459-eb22-5f12-afc7-771ea2230989'
