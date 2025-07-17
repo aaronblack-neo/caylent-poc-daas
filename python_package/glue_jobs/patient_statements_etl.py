@@ -14,7 +14,6 @@ This script now includes specialized healthcare data transformations:
    - 'urn:xcures:documentId' with 'valueString' → 'documentId' column
    - Creates meaningful column names from healthcare URNs
 
-   
 3. Reference Parsing:
    - 'reference=Medication/3f41c459-eb22-5f12-afc7-771ea2230989'
    - → 'Medication' column with value '3f41c459-eb22-5f12-afc7-771ea2230989'
@@ -43,7 +42,10 @@ import os
 import glob
 import shutil
 import sys
+import boto3
 import logging
+import time
+import uuid
 from awsglue.context import GlueContext
 from awsglue.utils import getResolvedOptions
 from pyspark.sql import SparkSession
@@ -962,9 +964,9 @@ def process_with_spark_optimizations():
     
     return None
 
-def process_medication_statements_glue(input_s3_path, output_s3_path):
+def process_medication_statements_glue_from_table(glue_database1, glue_database2, glue_table, output_s3_path, athena_output_bucket):
     """
-    AWS Glue-compatible main function to process the medication statements CSV from S3 and flatten JSON columns, writing output to S3.
+    AWS Glue-compatible main function to process the medication statements from a Glue table and flatten JSON columns, writing output to S3.
     """
     logger = logging.getLogger("medication_glue_etl")
     logger.setLevel(logging.INFO)
@@ -973,122 +975,158 @@ def process_medication_statements_glue(input_s3_path, output_s3_path):
     if not logger.handlers:
         logger.addHandler(handler)
 
-    logger.info("Starting MedicationStatement ETL job")
-    try:
-        process_with_spark_optimizations()
+    logger.info("Starting MedicationStatement ETL job (from Glue table)")
+    process_with_spark_optimizations()
 
-        # Initialize GlueContext and Spark session
-        sc = SparkContext()
-        glueContext = GlueContext(sc)
-        spark = glueContext.spark_session
+    # Initialize GlueContext and Spark session
+    sc = SparkContext()
+    glueContext = GlueContext(sc)
+    spark = glueContext.spark_session
 
-        # Set Spark SQL configs (safe for Glue)
-        spark.conf.set("spark.sql.adaptive.enabled", "true")
-        spark.conf.set("spark.sql.adaptive.coalescePartitions.enabled", "true")
-        spark.conf.set("spark.sql.adaptive.skewJoin.enabled", "true")
-        spark.conf.set("spark.sql.adaptive.localShuffleReader.enabled", "true")
-        iceberg_s3_path = "s3://caylent-poc-datalake/datalake/"
+    # Set Spark SQL configs (safe for Glue)
+    spark.conf.set("spark.sql.adaptive.enabled", "true")
+    spark.conf.set("spark.sql.adaptive.coalescePartitions.enabled", "true")
+    spark.conf.set("spark.sql.adaptive.skewJoin.enabled", "true")
+    spark.conf.set("spark.sql.adaptive.localShuffleReader.enabled", "true")
+    iceberg_s3_path = "s3://caylent-poc-datalake/datalake/"
 
-        spark.conf.set("spark.sql.adaptive.enabled", "true")
-        spark.conf.set("spark.sql.adaptive.coalescePartitions.enabled", "true")
-        spark.conf.set("spark.sql.adaptive.skewJoin.enabled", "true")
-        spark.conf.set("spark.sql.adaptive.localShuffleReader.enabled", "true")
-        spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
-        spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
-        spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
-        spark.conf.set("spark.sql.defaultCatalog", "glue_catalog")
-        spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", iceberg_s3_path)
-        
-        logger.info(f"Reading CSV file from S3: {input_s3_path}")
-        df = spark.read.option("header", "true") \
-                      .option("inferSchema", "true") \
-                      .option("escape", '"') \
-                      .option("multiline", "true") \
-                      .csv(input_s3_path)
-        logger.info(f"Input DataFrame: {df.count()} rows, {len(df.columns)} columns")
-
-        # Identify JSON columns that need flattening
-        json_columns = [
-            'meta', 'text', 'extension', 'identifier', 'medicationcodeableconcept',
-            'medicationreference', 'subject', 'context', 'effectiveperiod',
-            'informationsource', 'derivedfrom', 'reasoncode', 'reasonreference',
-            'note', 'dosage'
-        ]
-        existing_json_columns = [col for col in json_columns if col in df.columns]
-        logger.info(f"JSON columns to process: {existing_json_columns}")
-
-        result_df = process_with_udf_approach(df, existing_json_columns)
-        logger.info(f"Flattened DataFrame: {result_df.count()} rows, {len(result_df.columns)} columns")
-
-        for col_name in ['effectivedatetime', 'dateasserted']:
-            norm_col = f"{col_name}_normalized"
-            if norm_col in result_df.columns:
-                result_df = result_df.withColumn(col_name, col(norm_col))
-
-        # If medicationreference_reference exists, extract the hash and rename to medicationid
-        if 'medicationreference_reference' in result_df.columns:
-            # Extract the part after 'Medication/'
-            result_df = result_df.withColumn(
-                'medicationid',
-                regexp_extract(col('medicationreference_reference'), r'^Medication/(.+)$', 1)
-            )
-            # Drop the original column
-            result_df = result_df.drop('medicationreference_reference')
-
-        # If subject_reference exists, extract the hash and rename to patientid
-        if 'subject_reference' in result_df.columns:
-            # Extract the part after 'Patient/'
-            result_df = result_df.withColumn(
-                'patientid',
-                regexp_extract(col('subject_reference'), r'^Patient/(.+)$', 1)
-            )
-            # Drop the original column
-            result_df = result_df.drop('subject_reference')
-
-        # If informationsource_reference exists, extract the hash and rename to practitionerid
-        if 'informationsource_reference' in result_df.columns:
-            # Extract the part after 'PractitionerRole/'
-            result_df = result_df.withColumn(
-                'practitionerid',
-                regexp_extract(col('informationsource_reference'), r'^PractitionerRole/(.+)$', 1)
-            )
-            # Drop the original column
-            result_df = result_df.drop('informationsource_reference')
-
-        # Consistently convert all empty strings, None, or 'null' (string) to null (None in Spark)
-        for c in result_df.columns:
-            result_df = result_df.withColumn(
-                c,
-                when((col(c) == "") | (col(c).isNull()) | (col(c) == "null"), None).otherwise(col(c))
-            )
-
-        # Normalize all column names to lower case
-        lower_cols = [c.lower() for c in result_df.columns]
-        result_df = result_df.toDF(*lower_cols)
-
-        logger.info(f"Writing flattened data to S3: {output_s3_path}")
-        
-        format = "iceberg"
-        catalog_name = "glue_catalog"
-        database_name = "stage"
-        table_name = "medication_statement_v2"
-        iceberg_full_table = catalog_name + "." + database_name + "." + table_name
-
-        if spark.catalog.tableExists(iceberg_full_table):
-            result_df.writeTo(iceberg_full_table).using(format).append()
+    spark.conf.set("spark.sql.adaptive.enabled", "true")
+    spark.conf.set("spark.sql.adaptive.coalescePartitions.enabled", "true")
+    spark.conf.set("spark.sql.adaptive.skewJoin.enabled", "true")
+    spark.conf.set("spark.sql.adaptive.localShuffleReader.enabled", "true")
+    spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
+    spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
+    spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
+    spark.conf.set("spark.sql.defaultCatalog", "glue_catalog")
+    spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", iceberg_s3_path)
     
-        else:
-            result_df.writeTo(iceberg_full_table).using(format).createOrReplace()   
+    logger.info(f"Reading Glue table using Athena: {glue_database1}.{glue_table}")
+    logger.info(f"Reading Glue table using Athena: {glue_database2}.{glue_table}")
+
+    athena = boto3.client('athena')
+    query_string1 = f"SELECT * FROM {glue_database1}.{glue_table}"
+    query_string2 = f"SELECT * FROM {glue_database2}.{glue_table}"
+    athena_output_bucket = athena_output_bucket if athena_output_bucket.endswith('/') else athena_output_bucket + "/"
+   
+    response1 = athena.start_query_execution(
+        QueryString=query_string1,
+        QueryExecutionContext={'Database': glue_database1},
+        ResultConfiguration={'OutputLocation': athena_output_bucket}
+    )
+    
+    response2 = athena.start_query_execution(
+        QueryString=query_string2,
+        QueryExecutionContext={'Database': glue_database2},
+        ResultConfiguration={'OutputLocation': athena_output_bucket}
+    )
+    query_execution_id1 = response1['QueryExecutionId']
+    query_execution_id2 = response2['QueryExecutionId']
+
+    state1, state2 = 'RUNNING', 'RUNNING'
+    while state1 in ['RUNNING', 'QUEUED'] or state2 in ['RUNNING', 'QUEUED']:
+        time.sleep(3)
+        state1 = athena.get_query_execution(QueryExecutionId=query_execution_id1)['QueryExecution']['Status']['State']
+        state2 = athena.get_query_execution(QueryExecutionId=query_execution_id2)['QueryExecution']['Status']['State']
+        print(f"Query state: {state1}, {state2}")
+    
+    if state1 != 'SUCCEEDED' or state2 != 'SUCCEEDED':
+        raise Exception(f"Query failed or was cancelled: {state1}, {state2}")
+    
+    result_path1 = f"{athena_output_bucket}{query_execution_id1}.csv"
+    result_path2 = f"{athena_output_bucket}{query_execution_id2}.csv"
+    print(f"Reading Athena result from: {result_path1}, {result_path2}")
+    
+    df1 = spark.read.option("header", "true").csv(result_path1)
+    df2 = spark.read.option("header", "true").csv(result_path2)
+    df = df1.union(df2)
+
+    logger.info(f"Input DataFrame1: {df1.count()} rows, {len(df1.columns)} columns")
+    logger.info(f"Input DataFrame2: {df2.count()} rows, {len(df2.columns)} columns")
+    logger.info(f"Input df: {df.count()} rows, {len(df.columns)} columns")
+
+    # Identify JSON columns that need flattening
+    json_columns = [
+        'meta', 'text', 'extension', 'identifier', 'medicationcodeableconcept',
+        'medicationreference', 'subject', 'context', 'effectiveperiod',
+        'informationsource', 'derivedfrom', 'reasoncode', 'reasonreference',
+        'note', 'dosage'
+    ]
+    existing_json_columns = [col for col in json_columns if col in df.columns]
+    logger.info(f"JSON columns to process: {existing_json_columns}")
+
+    result_df = process_with_udf_approach(df, existing_json_columns)
+    logger.info(f"Flattened DataFrame: {result_df.count()} rows, {len(result_df.columns)} columns")
+
+    for col_name in ['effectivedatetime', 'dateasserted']:
+        norm_col = f"{col_name}_normalized"
+        if norm_col in result_df.columns:
+            result_df = result_df.withColumn(col_name, col(norm_col))
+
+    # If medicationreference_reference exists, extract the hash and rename to medicationid
+    if 'medicationreference_reference' in result_df.columns:
+        # Extract the part after 'Medication/'
+        result_df = result_df.withColumn(
+            'medicationid',
+            regexp_extract(col('medicationreference_reference'), r'^Medication/(.+)$', 1)
+        )
+        # Drop the original column
+        result_df = result_df.drop('medicationreference_reference')
+
+    # If subject_reference exists, extract the hash and rename to patientid
+    if 'subject_reference' in result_df.columns:
+        # Extract the part after 'Patient/'
+        result_df = result_df.withColumn(
+            'patientid',
+            regexp_extract(col('subject_reference'), r'^Patient/(.+)$', 1)
+        )
+        # Drop the original column
+        result_df = result_df.drop('subject_reference')
+
+    # If informationsource_reference exists, extract the hash and rename to practitionerid
+    if 'informationsource_reference' in result_df.columns:
+        # Extract the part after 'PractitionerRole/'
+        result_df = result_df.withColumn(
+            'practitionerid',
+            regexp_extract(col('informationsource_reference'), r'^PractitionerRole/(.+)$', 1)
+        )
+        # Drop the original column
+        result_df = result_df.drop('informationsource_reference')
+
+    # Consistently convert all empty strings, None, or 'null' (string) to null (None in Spark)
+    for c in result_df.columns:
+        result_df = result_df.withColumn(
+            c,
+            when((col(c) == "") | (col(c).isNull()) | (col(c) == "null"), None).otherwise(col(c))
+        )
+
+    # Normalize all column names to lower case
+    lower_cols = [c.lower() for c in result_df.columns]
+    result_df = result_df.toDF(*lower_cols)
+
+    logger.info(f"Writing flattened data to S3: {output_s3_path}")
+    
+    format = "iceberg"
+    catalog_name = "glue_catalog"
+    database_name = "stage"
+    table_name = "medication_statement_v2"
+    iceberg_full_table = catalog_name + "." + database_name + "." + table_name
+
+    if spark.catalog.tableExists(iceberg_full_table):
+        result_df.writeTo(iceberg_full_table).using(format).append()
+
+    else:
+        result_df.writeTo(iceberg_full_table).using(format).createOrReplace() 
         
-        result_df.coalesce(1).write.mode('overwrite').option('header', 'true').csv(output_s3_path)
-        logger.info("Processing complete!")
-        spark.stop()
-    except Exception as e:
-        logger.error(f"ETL job failed: {e}", exc_info=True)
-        sys.exit(1)
+    result_df.coalesce(1).write.mode('overwrite').option('header', 'true').csv(output_s3_path)
+    logger.info("Processing complete!")
+    spark.stop()
 
 if __name__ == "__main__":
-    args = getResolvedOptions(sys.argv, ['INPUT_S3_PATH', 'OUTPUT_S3_PATH'])
-    input_s3_path = args['INPUT_S3_PATH']
+    args = getResolvedOptions(sys.argv, ['GLUE_DATABASE1', 'GLUE_DATABASE2', 'GLUE_TABLE', 'OUTPUT_S3_PATH', 'athena_output_bucket'])
+    
+    glue_database1 = args['GLUE_DATABASE1']
+    glue_database2 = args['GLUE_DATABASE2']
+    glue_table = args['GLUE_TABLE']
     output_s3_path = args['OUTPUT_S3_PATH']
-    process_medication_statements_glue(input_s3_path, output_s3_path)
+    athena_output_bucket = args['athena_output_bucket']
+    process_medication_statements_glue_from_table(glue_database1, glue_database2, glue_table, output_s3_path, athena_output_bucket)
