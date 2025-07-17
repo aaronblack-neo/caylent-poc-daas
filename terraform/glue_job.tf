@@ -9,6 +9,8 @@ resource "aws_s3_object" "raw_glue_job_script" {
 resource "aws_glue_job" "raw_job" {
   name     = "caylent-poc-etl-landing-to-raw-csv"
   role_arn = aws_iam_role.glue_etl_role.arn
+  description = "Processes CSV files - Source: Landing zone S3 bucket, Target: Raw zone in parquet format"
+
 
   command {
     script_location = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/${aws_s3_object.raw_glue_job_script.key}"
@@ -51,6 +53,7 @@ resource "aws_s3_object" "fhir_job_script" {
 resource "aws_glue_job" "fhir_job" {
   name     = "caylent-poc-etl-landing-to-raw-fhir"
   role_arn = aws_iam_role.glue_etl_role.arn
+  description = "Processes FHIR JSON files - Source: Landing zone S3 bucket, Target: Raw zone in parquet format"
 
   command {
     script_location = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/${aws_s3_object.fhir_job_script.key}"
@@ -94,6 +97,7 @@ resource "aws_s3_object" "fhir_stage_job_script" {
 resource "aws_glue_job" "fhir_stage_job" {
   name     = "caylent-poc-etl-raw-to-stage-fhir"
   role_arn = aws_iam_role.glue_etl_role.arn
+  description = "Transforms raw FHIR data - Source: Raw zone parquet files, Target: Stage zone, Functions: FHIR transformations / parsing"
 
   command {
     script_location = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/${aws_s3_object.fhir_stage_job_script.key}"
@@ -137,6 +141,7 @@ resource "aws_s3_object" "csv_stage_job_script" {
 resource "aws_glue_job" "csv_stage_job" {
   name     = "caylent-poc-etl-raw-to-stage-csv"
   role_arn = aws_iam_role.glue_etl_role.arn
+  description = "Transforms raw CSV tables - Source: Raw zone parquet files, Target: Stage zone"
 
   command {
     script_location = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/${aws_s3_object.csv_stage_job_script.key}"

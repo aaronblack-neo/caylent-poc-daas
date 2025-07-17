@@ -4,7 +4,6 @@
 resource "aws_iam_role" "glue_etl_role" {
   name = "glue_etl_role"
 
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

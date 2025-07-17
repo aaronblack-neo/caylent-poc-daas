@@ -25,18 +25,18 @@ resource "aws_s3_bucket" "medication_statement_bucket" {
   bucket = "healthlake-poc-sample"
 }
 
-# create folders in raw bucket
-# resource "aws_s3_object" "landing_bucket_folders" {
-#   for_each = toset([
-#     "accession_data/",
-#     "case_data/",
-#     "client_data/",
-#     "doctor_data/",
-#     "image_data/",
-#     "orders_fact_data/",
-#     "patient_data/"
-#   ])
-#
-#   bucket = aws_s3_bucket.datalake_bucket.id
-#   key    = each.value
-# }
+
+
+resource "aws_s3_object" "python_lib" {
+  bucket = aws_s3_bucket.glue_scripts_bucket.id
+  key    = "artifacts/${local.python_lib_file}"
+  source = "../files/${local.python_lib_file}"
+  etag   = filemd5("../files/${local.python_lib_file}")
+}
+
+resource "aws_s3_object" "s3_table" {
+  bucket = aws_s3_bucket.glue_scripts_bucket.id
+  key    = "s3_tables_jars/${local.s3_table_file}"
+  source = "../files/${local.s3_table_file}"
+  etag   = filemd5("../files/${local.s3_table_file}")
+}

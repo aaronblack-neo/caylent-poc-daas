@@ -4,7 +4,7 @@ locals {
 
   # lake formation
 
-    databases = [] #["raw"]
+  databases = [] #["raw"]
   roles     = [aws_iam_role.glue_etl_role.arn, "arn:aws:iam::664418979226:user/marcos.foglino@caylent.com", "arn:aws:iam::664418979226:user/bruno.souza@caylent.com"]
   databases_with_roles = flatten([
     for role in local.roles : [
@@ -17,7 +17,9 @@ locals {
   ])
 
   # glue
-
+  
+  python_lib_file             = "python_libs-0.1.0-py3-none-any.whl"
+  s3_table_file               = "s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
   raw_job_name                = "job_landing_to_raw_csv.py"
   fhir_job_name               = "job_landing_to_raw_fhir.py"
   fhir_stage_job_name         = "job_raw_to_stage_fhir.py"
