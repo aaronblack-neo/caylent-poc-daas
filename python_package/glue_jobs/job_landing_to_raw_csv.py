@@ -15,6 +15,7 @@ args = getResolvedOptions(
         "JOB_NAME",
         "landing_bucket_name",
         "datalake_bucket_name",
+        "database_name"
     ],
 )
 
@@ -29,7 +30,7 @@ logger = glueContext.get_logger()
 
 landing_bucket_name = args["landing_bucket_name"]
 datalake_bucket_name = args["datalake_bucket_name"]
-
+database_name = args['database_name']
 tables = csv_tables.keys()
 
 logger.info(f"Tables to process: {tables}")
@@ -40,6 +41,7 @@ for table_name in tables:
         glueContext,
         landing_bucket_name=landing_bucket_name,
         datalake_bucket_name=datalake_bucket_name,
+        database_name=database_name
     )
     latest_data_df = etl_manager.process_landing_data(
         table=table_name, delimiter=csv_tables[table_name]["delimiter"]

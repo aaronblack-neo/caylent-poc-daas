@@ -18,6 +18,8 @@ locals {
 
   # glue
   
+  raw_database_name           = "raw"
+  stage_database_name         = "stage"
   python_lib_file             = "python_libs-0.1.0-py3-none-any.whl"
   s3_table_file               = "s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
   raw_job_name                = "job_landing_to_raw_csv.py"

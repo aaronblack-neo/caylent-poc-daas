@@ -12,6 +12,7 @@ args = getResolvedOptions(
     sys.argv,
     [
         "JOB_NAME",
+        "database_name"
     ],
 )
 
@@ -23,7 +24,7 @@ job.init(args["JOB_NAME"], args)
 logger = glueContext.get_logger()
 ##################################
 
-
+database_name = args['database_name']
 base_s3_input_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share"
 
 # prescribed folders
@@ -50,7 +51,7 @@ for folder in folders:
 
         table_name = folder.lower()
 
-        write_to_table(df, "raw", table_name)
+        write_to_table(df, database_name, table_name)
 
     except:
         logger.error(f"Error processing folder {folder}. Skipping to next folder.")

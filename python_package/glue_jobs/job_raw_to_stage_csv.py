@@ -12,7 +12,7 @@ from etl.etl_helper import write_to_table
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
     sys.argv,
-    ["JOB_NAME", "namespace"],
+    ["JOB_NAME", "database_name"],
 )
 
 sc = SparkContext()
@@ -23,7 +23,7 @@ job.init(args["JOB_NAME"], args)
 logger = glueContext.get_logger()
 ##################################
 
-namespace = args["namespace"]
+database_name = args['database_name']
 
 # List of CSV tables to process
 csv_tables = csv_tables.keys()
@@ -32,10 +32,10 @@ for table_name in csv_tables:
     logger.info(f"Processing table: {table_name}")
 
     # Read from raw table
-    df = spark.sql(f"SELECT * FROM raw.{table_name}")
+    df = spark.sql(f"SELECT * FROM {database_name}.{table_name}")
 
     # Write to stage layer
-    write_to_table(df, namespace, table_name)
+    write_to_table(df, database_name, table_name)
     logger.info(f"Successfully processed {table_name}")
 
 job.commit()

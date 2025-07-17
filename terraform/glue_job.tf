@@ -28,6 +28,7 @@ resource "aws_glue_job" "raw_job" {
     "--enable-spark-ui"                  = "true"
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--landing_bucket_name"              = local.client_landing_bucket
+    "--database_name"                    = local.raw_database_name
     "--datalake_bucket_name"             = aws_s3_bucket.datalake_bucket.id
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
   }
@@ -73,7 +74,7 @@ resource "aws_glue_job" "fhir_job" {
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
     "--landing_bucket_name"              = local.client_landing_bucket
-    "--raw_namespace"                    = "raw"
+    "--database_name"                    = "raw"
   }
 
   glue_version      = "5.0"
@@ -117,7 +118,7 @@ resource "aws_glue_job" "fhir_stage_job" {
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
     "--landing_bucket_name"              = local.client_landing_bucket
-    "--namespace"                        = "stage"
+    "--database_name"                        = "stage"
   }
 
   glue_version      = "5.0"
@@ -160,7 +161,7 @@ resource "aws_glue_job" "csv_stage_job" {
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
-    "--namespace"                        = "stage"
+    "--database_name"                        = "stage"
   }
 
   glue_version      = "5.0"
@@ -202,7 +203,7 @@ resource "aws_glue_job" "comprehend_job" {
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
-    "--namespace"                        = "stage"
+    "--database_name"                        = "stage"
     "--input_s3_path"                    = local.input_s3_path
     "--output_s3_txt_path"               = local.output_s3_txt_path
     "--output_s3_comprehend_path"        = local.output_s3_comprehend_path
@@ -248,7 +249,7 @@ resource "aws_glue_job" "medication_statement_job" {
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
-    "--namespace"                        = "stage"
+    "--database_name"                        = "stage"
     "--INPUT_S3_PATH"                    = local.INPUT_S3_PATH
     "--OUTPUT_S3_PATH"                   = local.OUTPUT_S3_PATH
       }
