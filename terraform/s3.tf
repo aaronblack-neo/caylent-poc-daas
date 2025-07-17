@@ -14,6 +14,16 @@ resource "aws_s3_bucket" "athena_query_results_bucket" {
   bucket = "caylent-poc-athena-query-results"
 }
 
+# Comprehend bucket
+resource "aws_s3_bucket" "comprehend_bucket" {
+  bucket = "caylent-poc-comprehend-bucket"
+}
+
+# Medication statement bucket
+
+resource "aws_s3_bucket" "medication_statement_bucket" {
+  bucket = "healthlake-poc-sample"
+}
 
 # create folders in raw bucket
 # resource "aws_s3_object" "landing_bucket_folders" {

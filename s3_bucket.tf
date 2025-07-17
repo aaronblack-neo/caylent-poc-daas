@@ -1,7 +1,3 @@
-provider "aws" {
-  region = "us-east-1"  # Change to your preferred region
-}
-
 resource "aws_s3_bucket" "caylent_poc_s3_tables" {
   bucket = "caylent-poc-s3-tables"
 
