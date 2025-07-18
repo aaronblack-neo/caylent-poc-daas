@@ -27,7 +27,7 @@ locals {
   fhir_stage_job_name         = "job_raw_to_stage_fhir.py"
   csv_stage_job_name          = "job_raw_to_stage_csv.py"
   comprehend_job_name         = "job_comprehend.py"
-  medication_statement        = "patient_statements_etl.py"
+  medication_statement        = "patient_statements_etl_reading_csv.py"
   bucket_name                 = "caylent-poc-medical-comprehend"
   input_s3_path               = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/input/"
   output_s3_txt_path          = "s3://${aws_s3_bucket.comprehend_bucket.id}/example/output/"
