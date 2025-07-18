@@ -249,7 +249,7 @@ resource "aws_glue_job" "medication_statement_job" {
     "--extra-py-files"                   = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/artifacts/python_libs-0.1.0-py3-none-any.whl"
     "--conf"                             = trim(local.iceberg_spark_conf, "\n")
     "--extra-jars"                       = "s3://${aws_s3_bucket.glue_scripts_bucket.id}/s3_tables_jars/s3-tables-catalog-for-iceberg-runtime-0.1.5.jar"
-    "--database_name"                        = "stage"
+    "--database_name"                    = "stage"
     "--INPUT_S3_PATH"                    = local.INPUT_S3_PATH
     "--OUTPUT_S3_PATH"                   = local.OUTPUT_S3_PATH
       }
