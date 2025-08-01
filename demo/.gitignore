@@ -1,6 +1,3 @@
-# Configuration files with sensitive data
-config.py
-
 # Python artifacts
 __pycache__/
 *.pyc
