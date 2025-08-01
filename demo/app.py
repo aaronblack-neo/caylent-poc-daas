@@ -6,49 +6,28 @@ import os
 import re
 from uuid import uuid4
 from typing import Dict, Any, Optional
-# comment for GIT
+
 # Try to load configuration from config.py if it exists
 # try:
 from config import (
     AWS_REGION as DEFAULT_AWS_REGION,
-    AWS_ACCESS_KEY_ID as DEFAULT_AWS_ACCESS_KEY_ID,
-    AWS_SECRET_ACCESS_KEY as DEFAULT_AWS_SECRET_ACCESS_KEY,
     DEFAULT_STATE_MACHINE_ARN,
     DEFAULT_PROMPT_ID,
     SAMPLE_QUERIES
 )
-# # Load from environment variables if available (these override config.py)
-# DEFAULT_AWS_REGION = os.getenv('AWS_REGION', DEFAULT_AWS_REGION)
-# DEFAULT_AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', DEFAULT_AWS_ACCESS_KEY_ID)
-# DEFAULT_AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', DEFAULT_AWS_SECRET_ACCESS_KEY)
-# DEFAULT_STATE_MACHINE_ARN = os.getenv('STATE_MACHINE_ARN', DEFAULT_STATE_MACHINE_ARN)
-# DEFAULT_PROMPT_ID = os.getenv('DEFAULT_PROMPT_ID', DEFAULT_PROMPT_ID)
 
 # Page configuration
 st.set_page_config(
     page_title="Neognemoics Text2SQL Demo",
-    page_icon="💬",
+    page_icon="ð¬",
     layout="wide"
 )
 
-def init_aws_client(
-    region: str, 
-    aws_access_key_id: Optional[str] = None, 
-    aws_secret_access_key: Optional[str] = None
-) -> boto3.client:
-    """Initialize AWS Step Functions client with direct credentials or environment"""
+def init_aws_client(region: str) -> boto3.client:
+    """Initialize AWS Step Functions client using environment variables or IAM role"""
     try:
-        # Try direct credentials first
-        if aws_access_key_id and aws_secret_access_key:
-            client = boto3.client(
-                'stepfunctions', 
-                region_name=region,
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key
-            )
-        else:
-            # Fall back to environment variables or IAM role
-            client = boto3.client('stepfunctions', region_name=region)
+        # Use environment variables or IAM role
+        client = boto3.client('stepfunctions', region_name=region)
         
         # Test the client with a simple call
         client.list_state_machines(maxResults=1)
@@ -91,13 +70,13 @@ def execute_pipeline(
         status_text = st.empty()
         
         while True:
-            status_text.text("⏳ Processing your query...")
+            status_text.text("â³ Processing your query...")
             execution_result = client.describe_execution(executionArn=execution_arn)
             status = execution_result['status']
             
             if status == 'SUCCEEDED':
                 progress_bar.progress(100)
-                status_text.text("✅ Query completed successfully!")
+                status_text.text("â Query completed successfully!")
                 
                 # Parse the output
                 output = json.loads(execution_result.get('output', '{}'))
@@ -110,7 +89,7 @@ def execute_pipeline(
                 
             elif status == 'FAILED':
                 progress_bar.progress(100)
-                status_text.text("❌ Query failed")
+                status_text.text("â Query failed")
                 return {
                     'success': False,
                     'status': status,
@@ -120,7 +99,7 @@ def execute_pipeline(
                 
             elif status == 'TIMED_OUT':
                 progress_bar.progress(100)
-                status_text.text("⏰ Query timed out")
+                status_text.text("â° Query timed out")
                 return {
                     'success': False,
                     'status': status,
@@ -180,7 +159,7 @@ def display_results(result: Dict[str, Any]):
     """Display the pipeline results"""
     
     if not result.get('success', False):
-        st.error("❌ Pipeline execution failed")
+        st.error("â Pipeline execution failed")
         if 'error' in result:
             st.error(f"Error: {result['error']}")
         return
@@ -199,32 +178,32 @@ def display_results(result: Dict[str, Any]):
         if isinstance(body, dict) and 'llm_response' in body:
             llm_response = body['llm_response']
             
-            st.success("✅ Query processed successfully!")
+            st.success("â Query processed successfully!")
             
             # Display the main response
             if isinstance(llm_response, dict):
                 if 'summary' in llm_response:
-                    st.subheader("📋 Summary")
+                    st.subheader("ð Summary")
                     st.write(clean_text_response(llm_response['summary']))
                 
                 # Display SQL Query if available
                 if 'sql_query' in body and body['sql_query']:
-                    st.subheader("🔍 SQL Query")
+                    st.subheader("ð SQL Query")
                     st.code(body['sql_query'], language='sql')
                 
                 if 'data' in llm_response and llm_response['data']:
-                    st.subheader("📊 Data")
+                    st.subheader("ð Data")
                     st.json(llm_response['data'])
                 
                 if 'sources' in llm_response and llm_response['sources']:
-                    st.subheader("📚 Sources")
+                    st.subheader("ð Sources")
                     for source in llm_response['sources']:
-                        st.write(f"• {clean_text_response(source)}")
+                        st.write(f"â¢ {clean_text_response(source)}")
                 
                 if 'links' in llm_response and llm_response['links']:
-                    st.subheader("🔗 Links")
+                    st.subheader("ð Links")
                     for link in llm_response['links']:
-                        st.write(f"• {clean_text_response(link)}")
+                        st.write(f"â¢ {clean_text_response(link)}")
             else:
                 st.write(clean_text_response(llm_response))
         else:
@@ -233,8 +212,6 @@ def display_results(result: Dict[str, Any]):
     else:
         st.error(f"Pipeline returned status code: {output.get('statusCode')}")
         st.json(output)
-
-#my comment 
 
 def main():
     """Main Streamlit app"""
@@ -251,7 +228,7 @@ def main():
         st.session_state.query_text = ""
     
     # Session Management Section
-    st.header("🔑 Session Management")
+    st.header("ð Session Management")
     
     col1, col2, col3 = st.columns([2, 1, 1])
     
@@ -260,21 +237,21 @@ def main():
         st.caption("This ID is sent with your query to maintain conversation context across multiple requests.")
     
     with col2:
-        if st.button("🔄 Reset Session", help="Generate a new session ID to start fresh", type="secondary"):
+        if st.button("ð Reset Session", help="Generate a new session ID to start fresh", type="secondary"):
             old_session = st.session_state.session_id[:8]
             st.session_state.session_id = str(uuid4())
-            st.success(f"🆕 New session started!\n\nOld: `{old_session}...`\nNew: `{st.session_state.session_id[:8]}...`")
+            st.success(f"ð New session started!\n\nOld: `{old_session}...`\nNew: `{st.session_state.session_id[:8]}...`")
             st.rerun()
     
     with col3:
-        if st.button("📋 Copy Session ID", help="Copy full session ID to clipboard"):
+        if st.button("ð Copy Session ID", help="Copy full session ID to clipboard"):
             st.code(st.session_state.session_id)
             st.success("Session ID displayed above for copying!")
     
     st.divider()
     
     # Sidebar for AWS configuration
-    st.sidebar.header("⚙️ AWS Configuration")
+    st.sidebar.header("âï¸ AWS Configuration")
     
     aws_region = st.sidebar.text_input(
         "AWS Region",
@@ -282,38 +259,10 @@ def main():
         help="The AWS region where your Step Functions state machine is deployed"
     )
     
-    # AWS Credentials Section
-    st.sidebar.subheader("🔐 AWS Credentials")
+    # AWS Authentication
+    st.sidebar.info("ð Using IAM role or environment variables for AWS authentication")
     
-    # Check for environment variables first
-    # env_access_key = os.getenv('AWS_ACCESS_KEY_ID', DEFAULT_AWS_ACCESS_KEY_ID)
-    # env_secret_key = os.getenv('AWS_SECRET_ACCESS_KEY', DEFAULT_AWS_SECRET_ACCESS_KEY)
-    env_access_key = DEFAULT_AWS_ACCESS_KEY_ID
-    env_secret_key = DEFAULT_AWS_SECRET_ACCESS_KEY
-    
-    aws_access_key_id = st.sidebar.text_input(
-        "AWS Access Key ID",
-        value=env_access_key,
-        type="password",
-        help="Your AWS Access Key ID. Can also be set via AWS_ACCESS_KEY_ID environment variable."
-    )
-    
-    aws_secret_access_key = st.sidebar.text_input(
-        "AWS Secret Access Key",
-        value=env_secret_key,
-        type="password",
-        help="Your AWS Secret Access Key. Can also be set via AWS_SECRET_ACCESS_KEY environment variable."
-    )
-    
-    # Show credential status
-    if aws_access_key_id and aws_secret_access_key:
-        st.sidebar.success("✅ AWS credentials provided")
-    elif env_access_key or env_secret_key:
-        st.sidebar.info("ℹ️ Using environment variables for AWS credentials")
-    else:
-        st.sidebar.warning("⚠️ No AWS credentials provided. Will try to use IAM role or environment variables.")
-    
-    st.sidebar.subheader("🎯 Pipeline Configuration")
+    st.sidebar.subheader("ð¯ Pipeline Configuration")
     
     state_machine_arn = st.sidebar.text_input(
         "State Machine ARN",
@@ -330,25 +279,25 @@ def main():
     )
     
     # Session info in sidebar
-    st.sidebar.header("🔑 Session Info")
+    st.sidebar.header("ð Session Info")
     st.sidebar.text(f"Current Session:")
     st.sidebar.code(st.session_state.session_id[:8] + "...")
     st.sidebar.caption("Full session ID shown in main area")
     
     # Quick query buttons
-    st.header("🚀 Quick Queries")
+    st.header("ð Quick Queries")
     st.caption("Click any button below to load the query into the text area")
     
     cols = st.columns(2)
     for i, query in enumerate(SAMPLE_QUERIES[:4]):  # Show first 4 sample queries
         with cols[i % 2]:
-            if st.button(f"📝 {query[:50]}{'...' if len(query) > 50 else ''}", key=f"sample_{i}"):
+            if st.button(f"ð {query[:50]}{'...' if len(query) > 50 else ''}", key=f"sample_{i}"):
                 st.session_state.query_text = query
-                st.success(f"✅ Query loaded: '{query[:60]}{'...' if len(query) > 60 else ''}'")
+                st.success(f"â Query loaded: '{query[:60]}{'...' if len(query) > 60 else ''}'")
                 st.rerun()
     
     # Main interface
-    st.header("💬 Ask Your Question")
+    st.header("ð¬ Ask Your Question")
     
     user_query = st.text_area(
         "Enter your question:",
@@ -364,12 +313,12 @@ def main():
     
     # Clear query button
     if st.session_state.query_text:
-        if st.button("🗑️ Clear Query", help="Clear the current query text"):
+        if st.button("ðï¸ Clear Query", help="Clear the current query text"):
             st.session_state.query_text = ""
             st.rerun()
     
     # Execute query
-    if st.button("🚀 Execute Query", type="primary", disabled=not user_query.strip()):
+    if st.button("ð Execute Query", type="primary", disabled=not user_query.strip()):
         
         # Validate inputs
         if not state_machine_arn:
@@ -381,17 +330,13 @@ def main():
             return
         
         # Show session info being used
-        st.info(f"🔑 Using Session ID: `{st.session_state.session_id[:8]}...` for this query")
+        st.info(f"ð Using Session ID: `{st.session_state.session_id[:8]}...` for this query")
         
         # Initialize AWS client
-        client = init_aws_client(
-            region=aws_region,
-            aws_access_key_id=aws_access_key_id if aws_access_key_id else None,
-            aws_secret_access_key=aws_secret_access_key if aws_secret_access_key else None
-        )
+        client = init_aws_client(region=aws_region)
         
         if not client:
-            st.error("❌ Could not connect to AWS. Please check your credentials and region.")
+            st.error("â Could not connect to AWS. Please check your credentials and region.")
             return
         
         # Execute the pipeline
@@ -409,7 +354,7 @@ def main():
         
         # Show execution details in expander
         if 'execution_arn' in result:
-            with st.expander("🔍 Execution Details"):
+            with st.expander("ð Execution Details"):
                 st.text(f"Execution ARN: {result['execution_arn']}")
                 st.text(f"Status: {result.get('status', 'Unknown')}")
                 st.text(f"Session ID used: {st.session_state.session_id}")
@@ -420,13 +365,8 @@ def main():
                 st.markdown(f"[View in AWS Console]({console_url})")
     
     # Configuration help
-    with st.expander("ℹ️ Need Help Getting Started?"):
+    with st.expander("â¹ï¸ Need Help Getting Started?"):
         st.write("""
-        **To get your AWS credentials:**
-        1. Go to AWS Console → IAM → Users → [Your User] → Security credentials
-        2. Create an access key if you don't have one
-        3. Copy the Access Key ID and Secret Access Key
-        
         **To get your State Machine ARN:**
         ```bash
         aws stepfunctions list-state-machines --region us-east-1
@@ -448,12 +388,10 @@ def main():
         - You can then edit the query before executing it
         - Use the "Clear Query" button to start fresh
         
-        **AWS Credentials Options:**
-        1. **Direct Input**: Enter Access Key ID and Secret Key in the sidebar (recommended for demo)
-        2. **Environment Variables**: Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-        3. **IAM Role**: If running on EC2/ECS/Lambda
+        **AWS Authentication:**
+        The app uses IAM roles or environment variables for AWS authentication when deployed in AWS.
         
-        **Tip:** Create a `config.py` file (see `config_template.py`) to avoid entering these values every time!
+        **Tip:** Create a `config.py` file (see `config_template.py`) to avoid entering configuration values every time!
         """)
 
 if __name__ == "__main__":
