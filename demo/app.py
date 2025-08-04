@@ -18,7 +18,7 @@ from config import (
 
 # Page configuration
 st.set_page_config(
-    page_title="Neognemoics Text2SQL Demo",
+    page_title="Neogenomics Query Assistant",
     page_icon=None,
     layout="wide"
 )
@@ -216,8 +216,8 @@ def display_results(result: Dict[str, Any]):
 def main():
     """Main Streamlit app"""
     
-    st.title("NeogenomicsText2SQL Demo")
-    st.markdown("Ask questions about your data and get SQL-powered answers!")
+    st.title("Neogenomics Oncology Data Solutions Chat Query Assistant")
+    st.markdown("Ask questions about our Patients by chatting with our Platform!")
     
     # Initialize session ID if not exists
     if 'session_id' not in st.session_state:
@@ -228,7 +228,7 @@ def main():
         st.session_state.query_text = ""
     
     # Session Management Section
-    st.header("Session Management")
+    st.header("Configuration (For the Techies)")
     
     col1, col2, col3 = st.columns([2, 1, 1])
     
@@ -251,16 +251,16 @@ def main():
     st.divider()
     
     # Sidebar for AWS configuration
-    st.sidebar.header("AWS Configuration")
+    st.sidebar.header("Chat Configuration")
     
     aws_region = st.sidebar.text_input(
         "AWS Region",
         value=DEFAULT_AWS_REGION,
-        help="The AWS region where your Step Functions state machine is deployed"
+        help="We know where you are coming from in the World!"
     )
     
     # AWS Authentication
-    st.sidebar.info("Using IAM role or environment variables for AWS authentication")
+    #st.sidebar.info("Using IAM role or environment variables for AWS authentication")
     
     st.sidebar.subheader("Pipeline Configuration")
     
@@ -272,17 +272,17 @@ def main():
     )
     
     prompt_id = st.sidebar.text_input(
-        "Prompt ID",
+        "Agent Persona",
         value=DEFAULT_PROMPT_ID,
         placeholder="1ffc97b1-0c90-46cc-a9c8-76e5faa4195f",
         help="The ID of the prompt configuration to use"
     )
     
     # Session info in sidebar
-    st.sidebar.header("Session Info")
-    st.sidebar.text(f"Current Session:")
-    st.sidebar.code(st.session_state.session_id[:8] + "...")
-    st.sidebar.caption("Full session ID shown in main area")
+    # st.sidebar.header("Session Info")
+    # st.sidebar.text(f"Current Session:")
+    # st.sidebar.code(st.session_state.session_id[:8] + "...")
+    # st.sidebar.caption("Full session ID shown in main area")
     
     # Quick query buttons
     st.header("Quick Queries")
