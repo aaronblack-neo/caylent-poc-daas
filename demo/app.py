@@ -216,7 +216,7 @@ def display_results(result: Dict[str, Any]):
 def main():
     """Main Streamlit app"""
     
-    st.title("Neogenomics Oncology Data Solutions Chat Query Assistant")
+    st.title("Oncology Data Solutions AI Analyst")
     st.markdown("Ask questions about our Patients by chatting with our Platform!")
     
     # Initialize session ID if not exists
@@ -228,30 +228,30 @@ def main():
         st.session_state.query_text = ""
     
     # Session Management Section
-    st.header("Configuration (For the Techies)")
+    # st.header("Configuration (For the Techies)")
     
-    col1, col2, col3 = st.columns([2, 1, 1])
+    # col1, col2, col3 = st.columns([2, 1, 1])
     
-    with col1:
-        st.info(f"**Current Session ID:** `{st.session_state.session_id}`")
-        st.caption("This ID is sent with your query to maintain conversation context across multiple requests.")
+    #with col1:
+    #    st.info(f"**Current Session ID:** `{st.session_state.session_id}`")
+    #    st.caption("This ID is sent with your query to maintain conversation context across multiple requests.")
     
-    with col2:
-        if st.button("Reset Session", help="Generate a new session ID to start fresh", type="secondary"):
-            old_session = st.session_state.session_id[:8]
-            st.session_state.session_id = str(uuid4())
-            st.success(f"New session started!\n\nOld: `{old_session}...`\nNew: `{st.session_state.session_id[:8]}...`")
-            st.rerun()
+    #with col2:
+    #    if st.button("Reset Session", help="Generate a new session ID to start fresh", type="secondary"):
+    #        old_session = st.session_state.session_id[:8]
+    #        st.session_state.session_id = str(uuid4())
+    #        st.success(f"New session started!\n\nOld: `{old_session}...`\nNew: `{st.session_state.session_id[:8]}...`")
+    #        st.rerun()
     
-    with col3:
-        if st.button("Copy Session ID", help="Copy full session ID to clipboard"):
-            st.code(st.session_state.session_id)
-            st.success("Session ID displayed above for copying!")
+    #with col3:
+    #    if st.button("Copy Session ID", help="Copy full session ID to clipboard"):
+    #        st.code(st.session_state.session_id)
+    #        st.success("Session ID displayed above for copying!")
     
     st.divider()
     
     # Sidebar for AWS configuration
-    st.sidebar.header("Chat Configuration")
+    st.sidebar.header("AI Session Info.")
     
     aws_region = st.sidebar.text_input(
         "AWS Region",
@@ -262,14 +262,14 @@ def main():
     # AWS Authentication
     #st.sidebar.info("Using IAM role or environment variables for AWS authentication")
     
-    st.sidebar.subheader("Pipeline Configuration")
+    st.sidebar.subheader("AI Setup")
     
-    state_machine_arn = st.sidebar.text_input(
-        "State Machine ARN",
-        value=DEFAULT_STATE_MACHINE_ARN,
-        placeholder="arn:aws:states:us-east-1:664418979226:stateMachine:Text2SQL-Pipeline-Dev",
-        help="The ARN of your Step Functions state machine"
-    )
+    #state_machine_arn = st.sidebar.text_input(
+    #    "State Machine ARN",
+    #    value=DEFAULT_STATE_MACHINE_ARN,
+    #    placeholder="arn:aws:states:us-east-1:664418979226:stateMachine:Text2SQL-Pipeline-Dev",
+    #    help="The ARN of your Step Functions state machine"
+    #)
     
     prompt_id = st.sidebar.text_input(
         "Agent Persona",
