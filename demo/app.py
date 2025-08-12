@@ -281,7 +281,7 @@ def main():
     # Define allowed prompt options (Label: ID)
     PROMPT_OPTIONS = {
         "Genetic Expert Agent": "Genetic Expert Agent",
-        "Pathology Report Summarizer": "2b8f3a99-bb1f-4b08-93e1-801297e86c7a"
+        "Pathology Report Summarizer": "2b8f3a99-bb1f-4b08-93e1-801297e86c7a",
         "Clinical Trial Data Analyst": "036edf14-95c1-45d5-8dd3-5acba379474a"
         }
 
