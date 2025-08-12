@@ -216,7 +216,7 @@ def display_results(result: Dict[str, Any]):
 def main():
     """Main Streamlit app"""
     
-    st.title("Oncology Data Solutions AI Analyst")
+    st.title("NEO ODS  AI Analyst")
     st.markdown("Ask questions about our Patients by chatting with our Platform!")
     
     # Initialize session ID if not exists
@@ -393,6 +393,6 @@ def main():
         
         **Tip:** Create a `config.py` file (see `config_template.py`) to avoid entering configuration values every time!
         """)
-# comment for test
+## comment for test
 if __name__ == "__main__":
     main()
