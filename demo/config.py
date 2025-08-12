@@ -19,5 +19,10 @@ DEFAULT_PROMPT_ID = PROMPT_IDS["claude"]
 # Sample queries for testing
 SAMPLE_QUERIES = [
     "Filter data by gene, histology, staging, treatment line.",
-    "What are the unique gene names?"
+    "What are the unique gene names?",
+    "What are the unique gene names, the first and last order date and the distinct count of patients where the panel is like Myeloid?",
+    "What are the unique gene names, the first and last order date and the distinct count of patients where the panel is like Myeloid, the variant classification is pathogenic and the allele frequency > 20?",
+
+    "What are the top 5 examples where the panel is like Myeloid, the variant classification is pathogenic and the allele frequency > 20%, order it by allele frequency ascending?",
+"What are the top 5 examples where the panel is like Myeloid, the variant classification is pathogenic and the allele frequency > 20%, order it by allele frequency ascending? Note, the column for allele frequency is a whole number, to do the correct calculation, you need to divide that column by 100%."
 ] 
