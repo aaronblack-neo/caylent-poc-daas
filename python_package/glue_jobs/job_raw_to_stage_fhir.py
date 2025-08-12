@@ -10,7 +10,7 @@ from etl.etl_helper import write_to_table, parse_fhir_medication_all_exploded, p
 # Define the arguments we want to be able to pass to the job
 args = getResolvedOptions(
     sys.argv,
-    ["JOB_NAME", "namespace"],
+    ["JOB_NAME", "database_name"],
 )
 
 sc = SparkContext()
@@ -21,7 +21,7 @@ job.init(args["JOB_NAME"], args)
 logger = glueContext.get_logger()
 ##################################
 
-namespace = args["namespace"]
+database_name = args["database_name"]
 
 s3_fhir_base_path = "s3://neogenomics-caylent-shared-data-daas/FHIR-Extract/share"
 
@@ -57,7 +57,7 @@ for table_name in tables:
             continue
 
     # Write to Glue Catalog table
-    write_to_table(df, namespace, table_name)
+    write_to_table(df, database_name, table_name)
 
 
 job.commit()

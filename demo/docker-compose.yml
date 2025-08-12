@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  text2sql-demo:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      # AWS Configuration
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      
+      # App Configuration (optional - can also configure in the UI)
+      - STATE_MACHINE_ARN=${STATE_MACHINE_ARN:-}
+      - DEFAULT_PROMPT_ID=${DEFAULT_PROMPT_ID:-}
+    
+    # Mount config file (optional)
+    volumes:
+      - ./config.py:/app/config.py:ro
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Container name for easy reference
+    container_name: text2sql-demo
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s 
