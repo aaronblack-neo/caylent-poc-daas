@@ -283,7 +283,7 @@ def main():
         "Genetic Expert Agent": "Genetic Expert Agent",
         "Pathology Report Summarizer": "2b8f3a99-bb1f-4b08-93e1-801297e86c7a",
         "Clinical Trial Data Analyst": "036edf14-95c1-45d5-8dd3-5acba379474a"
-        }
+    }
 
     # Sidebar dropdown for selecting agent persona
     selected_label = st.sidebar.selectbox(
@@ -293,9 +293,11 @@ def main():
         help="Select the AI agent persona to use for your query"
     )   
 
-# Map label back to prompt_id
-prompt_id = PROMPT_OPTIONS[selected_label]
+    # Map label back to prompt_id
+    prompt_id = PROMPT_OPTIONS[selected_label]
 
+    # Set ARN from config so it's always defined
+    state_machine_arn = DEFAULT_STATE_MACHINE_ARN
 
     # Session info in sidebar
     # st.sidebar.header("Session Info")
