@@ -271,13 +271,32 @@ def main():
     #    help="The ARN of your Step Functions state machine"
     #)
     
-    prompt_id = st.sidebar.text_input(
-        "Agent Persona",
-        value=DEFAULT_PROMPT_ID,
-        placeholder="1ffc97b1-0c90-46cc-a9c8-76e5faa4195f",
-        help="The ID of the prompt configuration to use"
-    )
+    #prompt_id = st.sidebar.text_input(
+    #    "Agent Persona",
+    #    value=DEFAULT_PROMPT_ID,
+    #    placeholder="1ffc97b1-0c90-46cc-a9c8-76e5faa4195f",
+    #    help="The ID of the prompt configuration to use"
+    #)
     
+    # Define allowed prompt options (Label: ID)
+    PROMPT_OPTIONS = {
+        "Genetic Expert Agent": "Genetic Expert Agent",
+        "Pathology Report Summarizer": "2b8f3a99-bb1f-4b08-93e1-801297e86c7a"
+        "Clinical Trial Data Analyst": "036edf14-95c1-45d5-8dd3-5acba379474a"
+        }
+
+    # Sidebar dropdown for selecting agent persona
+    selected_label = st.sidebar.selectbox(
+        "Agent Persona",
+        options=list(PROMPT_OPTIONS.keys()),
+        index=list(PROMPT_OPTIONS.keys()).index("Genetic Expert Agent"),
+        help="Select the AI agent persona to use for your query"
+    )   
+
+# Map label back to prompt_id
+prompt_id = PROMPT_OPTIONS[selected_label]
+
+
     # Session info in sidebar
     # st.sidebar.header("Session Info")
     # st.sidebar.text(f"Current Session:")
